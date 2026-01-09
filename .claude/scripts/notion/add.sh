@@ -171,11 +171,17 @@ create_docs_page() {
         epic_relation='"에픽": {"relation": [{"id": "'"${EPIC_ID}"'"}]},'
     fi
 
-    # 태스크 row 생성 payload
+    # 태스크 row 생성 payload (아이콘 포함)
     local task_payload=$(cat <<TASKEOF
 {
   "parent": {
     "database_id": "${tasks_db_id}"
+  },
+  "icon": {
+    "type": "external",
+    "external": {
+      "url": "https://www.notion.so/icons/checkmark-square_gray.svg"
+    }
   },
   "properties": {
     "": {
@@ -236,80 +242,28 @@ TASKEOF
     local blocks_payload=$(cat <<BLOCKSEOF
 {
   "children": [
-    {
-      "type": "heading_2",
-      "heading_2": {
-        "rich_text": [{"type": "text", "text": {"content": "배경"}}]
-      }
-    },
-    {
-      "type": "paragraph",
-      "paragraph": {
-        "rich_text": [{"type": "text", "text": {"content": "${name}의 구현 배경을 작성하세요."}}]
-      }
-    },
-    {
-      "type": "heading_2",
-      "heading_2": {
-        "rich_text": [{"type": "text", "text": {"content": "작업내용"}}]
-      }
-    },
-    {
-      "type": "numbered_list_item",
-      "numbered_list_item": {
-        "rich_text": [{"type": "text", "text": {"content": "작업 항목을 추가하세요"}}]
-      }
-    },
-    {
-      "type": "heading_2",
-      "heading_2": {
-        "rich_text": [{"type": "text", "text": {"content": "API Spec"}}]
-      }
-    },
-    {
-      "type": "heading_3",
-      "heading_3": {
-        "rich_text": [{"type": "text", "text": {"content": "[${method}] ${endpoint}"}}]
-      }
-    },
-    {
-      "type": "bulleted_list_item",
-      "bulleted_list_item": {
-        "rich_text": [{"type": "text", "text": {"content": "인증: Bearer Token"}}]
-      }
-    },
-    {
-      "type": "bulleted_list_item",
-      "bulleted_list_item": {
-        "rich_text": [{"type": "text", "text": {"content": "Content-Type: application/json"}}]
-      }
-    },
-    {
-      "type": "heading_3",
-      "heading_3": {
-        "rich_text": [{"type": "text", "text": {"content": "요청예시"}}]
-      }
-    },
-    {
-      "type": "code",
-      "code": {
-        "rich_text": [{"type": "text", "text": {"content": "curl -X '${method}' 'http://localhost:8000${endpoint}' \\\\\n  -H 'Authorization: Bearer {jwt_token}' \\\\\n  -H 'Content-Type: application/json'"}}],
-        "language": "bash"
-      }
-    },
-    {
-      "type": "heading_3",
-      "heading_3": {
-        "rich_text": [{"type": "text", "text": {"content": "응답 형식"}}]
-      }
-    },
-    {
-      "type": "code",
-      "code": {
-        "rich_text": [{"type": "text", "text": {"content": "{\n  \"success\": true,\n  \"data\": {}\n}"}}],
-        "language": "json"
-      }
-    }
+    {"type": "heading_2", "heading_2": {"rich_text": [{"type": "text", "text": {"content": "배경"}}]}},
+    {"type": "bulleted_list_item", "bulleted_list_item": {"rich_text": [{"type": "text", "text": {"content": "${name}의 구현 배경을 작성하세요."}}]}},
+    {"type": "heading_2", "heading_2": {"rich_text": [{"type": "text", "text": {"content": "작업내용"}}]}},
+    {"type": "bulleted_list_item", "bulleted_list_item": {"rich_text": [{"type": "text", "text": {"content": "작업 항목을 추가하세요"}}]}},
+    {"type": "heading_2", "heading_2": {"rich_text": [{"type": "text", "text": {"content": "${name}"}}]}},
+    {"type": "heading_3", "heading_3": {"rich_text": [{"type": "text", "text": {"content": "Endpoint"}}]}},
+    {"type": "paragraph", "paragraph": {"rich_text": [{"type": "text", "text": {"content": "${method} ${endpoint}"}}]}},
+    {"type": "heading_3", "heading_3": {"rich_text": [{"type": "text", "text": {"content": "Path Parameters"}}]}},
+    {"type": "bulleted_list_item", "bulleted_list_item": {"rich_text": [{"type": "text", "text": {"content": "없음 (필요시 추가)"}}]}},
+    {"type": "heading_3", "heading_3": {"rich_text": [{"type": "text", "text": {"content": "Query Parameters"}}]}},
+    {"type": "bulleted_list_item", "bulleted_list_item": {"rich_text": [{"type": "text", "text": {"content": "없음 (필요시 추가)"}}]}},
+    {"type": "heading_3", "heading_3": {"rich_text": [{"type": "text", "text": {"content": "Request Body"}}]}},
+    {"type": "code", "code": {"rich_text": [{"type": "text", "text": {"content": "// Request Body 예시를 작성하세요\n{\n  \n}"}}], "language": "json"}},
+    {"type": "heading_3", "heading_3": {"rich_text": [{"type": "text", "text": {"content": "요청 예시"}}]}},
+    {"type": "code", "code": {"rich_text": [{"type": "text", "text": {"content": "curl -X '${method}' 'http://localhost:8000${endpoint}' \\\\\n  -H 'Authorization: Bearer {jwt_token}' \\\\\n  -H 'Content-Type: application/json' \\\\\n  -d '{}'"}}], "language": "bash"}},
+    {"type": "heading_3", "heading_3": {"rich_text": [{"type": "text", "text": {"content": "Response Schema"}}]}},
+    {"type": "heading_3", "heading_3": {"rich_text": [{"type": "text", "text": {"content": "200 성공"}}]}},
+    {"type": "code", "code": {"rich_text": [{"type": "text", "text": {"content": "{\n  \"success\": true,\n  \"data\": {}\n}"}}], "language": "json"}},
+    {"type": "heading_3", "heading_3": {"rich_text": [{"type": "text", "text": {"content": "400 Bad Request"}}]}},
+    {"type": "code", "code": {"rich_text": [{"type": "text", "text": {"content": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"입력값이 올바르지 않습니다.\"\n  }\n}"}}], "language": "json"}},
+    {"type": "heading_3", "heading_3": {"rich_text": [{"type": "text", "text": {"content": "401 Unauthorized"}}]}},
+    {"type": "code", "code": {"rich_text": [{"type": "text", "text": {"content": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"AUTH_UNAUTHORIZED\",\n    \"message\": \"인증이 필요합니다.\"\n  }\n}"}}], "language": "json"}}
   ]
 }
 BLOCKSEOF

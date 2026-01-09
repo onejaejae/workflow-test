@@ -146,11 +146,59 @@ Plan의 각 Step을 순서대로 구현합니다.
 > **Phase 3 완료**
 >
 > 모든 구현이 완료되었습니다.
-> 문서화 및 리뷰를 진행하려면 "진행"이라고 입력하세요.
+> 리뷰를 진행하려면 "진행"이라고 입력하세요.
 
 ---
 
-## Phase 4: 문서화
+## Phase 4: 리뷰 & PR
+
+### 수행 작업
+code-reviewer agent의 관점으로 전체 변경사항을 리뷰합니다.
+
+1. 전체 변경사항 분석 (`git diff`)
+2. 코드 품질, 보안, 성능 검토
+3. 리뷰 리포트 출력
+
+### 리뷰 체크리스트
+- [ ] 코드 품질 (가독성, 네이밍, 중복)
+- [ ] 보안 (입력 검증, 인증/인가)
+- [ ] 성능 (N+1 쿼리, 불필요한 연산)
+- [ ] 테스트 (커버리지, 엣지케이스)
+
+### 출력 형식
+```markdown
+# Code Review Report
+
+## Summary
+| Category | Count |
+|----------|-------|
+| Critical | [N] |
+| Warning | [N] |
+| Suggestion | [N] |
+
+## Issues
+(Critical/Warning/Suggestion 이슈 목록)
+
+## Verdict
+**[APPROVED / CHANGES_REQUESTED]**
+```
+
+### 사용자 확인 요청
+
+**APPROVED인 경우:**
+> **Phase 4 완료 - 리뷰 통과!**
+>
+> 문서화를 진행하려면 "진행"이라고 입력하세요.
+> PR을 바로 생성하려면 "PR"이라고 입력하세요.
+
+**CHANGES_REQUESTED인 경우:**
+> **수정 필요**
+>
+> Critical 이슈를 수정한 후 다시 리뷰를 진행하세요.
+
+---
+
+## Phase 5: 문서화
 
 ### 수행 작업
 api-documentation skill을 참조하여 API 명세를 Notion과 Postman에 추가합니다.
@@ -196,7 +244,7 @@ api-documentation skill을 참조하여 API 명세를 Notion과 Postman에 추�
 1. 구현된 API 정보를 바탕으로 스크립트 파라미터 구성
 2. Notion 스크립트 실행 및 **성공 여부 확인**
 3. Postman 스크립트 실행 및 **성공 여부 확인**
-4. 모두 성공 시에만 Phase 4 완료 처리
+4. 모두 성공 시에만 Phase 5 완료 처리
 
 ### 실행 결과 보고
 각 스크립트 실행 후 결과를 보고하세요:
@@ -209,17 +257,17 @@ api-documentation skill을 참조하여 API 명세를 Notion과 Postman에 추�
 ### 완료 조건
 - Notion: ✅ 성공 + **docs 컬럼에 page mention 추가됨** (Docs Page ID 출력 확인)
 - Postman: ✅ 성공
-- **모두 만족해야** Phase 4 완료
+- **모두 만족해야** Phase 5 완료
 - 하나라도 실패 시 재시도 또는 문제 해결 후 재실행
 
 ### 사용자 확인 요청 (모두 성공 시)
-> **Phase 4 완료**
+> **Phase 5 완료**
 >
 > API 문서화가 완료되었습니다.
-> 리뷰를 진행하려면 "진행"이라고 입력하세요.
+> PR을 생성하려면 "진행"이라고 입력하세요.
 
 ### 실패 시
-> **Phase 4 미완료**
+> **Phase 5 미완료**
 >
 > 문서화가 완료되지 않았습니다.
 > - 환경 설정 확인: `.claude/scripts/env.sh`
@@ -228,56 +276,21 @@ api-documentation skill을 참조하여 API 명세를 Notion과 Postman에 추�
 
 ---
 
-## Phase 5: 리뷰 & PR
+## Phase 6: PR 생성
 
 ### 수행 작업
-code-reviewer agent의 관점으로 전체 변경사항을 리뷰합니다.
+리뷰와 문서화가 완료된 후 PR을 생성합니다.
 
-1. 전체 변경사항 분석 (`git diff`)
-2. 코드 품질, 보안, 성능 검토
-3. 리뷰 리포트 출력
-
-### 리뷰 체크리스트
-- [ ] 코드 품질 (가독성, 네이밍, 중복)
-- [ ] 보안 (입력 검증, 인증/인가)
-- [ ] 성능 (N+1 쿼리, 불필요한 연산)
-- [ ] 테스트 (커버리지, 엣지케이스)
-
-### 출력 형식
-```markdown
-# Code Review Report
-
-## Summary
-| Category | Count |
-|----------|-------|
-| Critical | [N] |
-| Warning | [N] |
-| Suggestion | [N] |
-
-## Issues
-(Critical/Warning/Suggestion 이슈 목록)
-
-## Verdict
-**[APPROVED / CHANGES_REQUESTED]**
-```
-
-### 사용자 확인 요청
-
-**APPROVED인 경우:**
-> **리뷰 통과!**
->
-> PR을 생성할까요? (예/아니오)
-
-"예"라고 하면 PR 생성 절차 안내:
+### 명령어
 ```bash
 git push -u origin [브랜치명]
 gh pr create --base develop --title "[제목]" --body "[본문]"
 ```
 
-**CHANGES_REQUESTED인 경우:**
-> **수정 필요**
+### 사용자 확인 요청
+> **Phase 6 완료 - PR 생성!**
 >
-> Critical 이슈를 수정한 후 다시 `/workflow`를 실행하세요.
+> PR URL: [생성된 PR URL]
 
 ---
 
@@ -303,4 +316,4 @@ gh pr create --base develop --title "[제목]" --body "[본문]"
 - 각 Phase는 사용자 확인 후 다음으로 진행
 - 문제 발생 시 언제든 "중단"하고 수동 진행 가능
 - 참조 Skills: api-conventions, code-standards, api-documentation
-- 참조 Agent: code-reviewer (Phase 5)
+- 참조 Agent: code-reviewer (Phase 4)
