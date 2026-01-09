@@ -157,14 +157,13 @@ api-documentation skill을 참조하여 API 명세를 Notion과 Postman에 추�
 
 ### 스크립트 실행
 ```bash
-# Notion에 API 명세 추가 (API suffix 자동, docs 페이지 생성)
+# Notion에 API 명세 추가 (API suffix 자동, 태스크 페이지 자동 생성)
 .claude/scripts/notion/add.sh \
   --name "API 이름" \
   --method POST \
   --endpoint "/api/v1/..." \
   --tag "Tag" \
   --create-docs \
-  --docs-parent "부모페이지ID" \
   --docs-title "[RE-AI] API 이름 구현"
 
 # CRUD API 공유 시 기존 docs 페이지 연결
@@ -208,7 +207,9 @@ api-documentation skill을 참조하여 API 명세를 Notion과 Postman에 추�
 ```
 
 ### 완료 조건
-- Notion, Postman **모두 성공**해야 Phase 4 완료
+- Notion: ✅ 성공 + **docs 컬럼에 page mention 추가됨** (Docs Page ID 출력 확인)
+- Postman: ✅ 성공
+- **모두 만족해야** Phase 4 완료
 - 하나라도 실패 시 재시도 또는 문제 해결 후 재실행
 
 ### 사용자 확인 요청 (모두 성공 시)
