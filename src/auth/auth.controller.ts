@@ -38,7 +38,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard)
   async logout(@Req() request: Request): Promise<LogoutResponse> {
-    const token = request.headers.authorization?.replace('Bearer ', '');
+    const token = request.headers.authorization!.replace('Bearer ', '');
     return this.authService.logout(token);
   }
 }
