@@ -9,6 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
 import { UserStore, User } from './store/user.store';
+import { TokenBlacklistStore } from './store/token-blacklist.store';
 
 export interface SignupResponse {
   id: string;
@@ -20,6 +21,10 @@ export interface LoginResponse {
   accessToken: string;
 }
 
+export interface LogoutResponse {
+  message: string;
+}
+
 const SALT_ROUNDS = 10;
 
 @Injectable()
@@ -27,6 +32,7 @@ export class AuthService {
   constructor(
     private readonly userStore: UserStore,
     private readonly jwtService: JwtService,
+    private readonly tokenBlacklistStore: TokenBlacklistStore,
   ) {}
 
   async signup(dto: SignupDto): Promise<SignupResponse> {
@@ -80,5 +86,14 @@ export class AuthService {
     const accessToken = this.jwtService.sign(payload);
 
     return { accessToken };
+  }
+
+  async logout(token: string): Promise<LogoutResponse> {
+    const decoded = this.jwtService.decode(token) as { exp: number };
+    const expiresAt = new Date(decoded.exp * 1000);
+
+    this.tokenBlacklistStore.add(token, expiresAt);
+
+    return { message: 'Logged out successfully' };
   }
 }
