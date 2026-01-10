@@ -4,16 +4,23 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from './auth.service';
 import { UserStore } from './store/user.store';
+import { TokenBlacklistStore } from './store/token-blacklist.store';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
 
 describe('AuthService', () => {
   let service: AuthService;
   let userStore: UserStore;
+  let tokenBlacklistStore: TokenBlacklistStore;
   let jwtService: JwtService;
 
   const mockJwtService = {
     sign: jest.fn().mockReturnValue('mock-jwt-token'),
+    decode: jest.fn().mockReturnValue({
+      sub: 'user-id',
+      email: 'test@example.com',
+      exp: Math.floor(Date.now() / 1000) + 3600,
+    }),
   };
 
   beforeEach(async () => {
@@ -21,17 +28,20 @@ describe('AuthService', () => {
       providers: [
         AuthService,
         UserStore,
+        TokenBlacklistStore,
         { provide: JwtService, useValue: mockJwtService },
       ],
     }).compile();
 
     service = module.get<AuthService>(AuthService);
     userStore = module.get<UserStore>(UserStore);
+    tokenBlacklistStore = module.get<TokenBlacklistStore>(TokenBlacklistStore);
     jwtService = module.get<JwtService>(JwtService);
   });
 
   afterEach(() => {
     userStore.clear();
+    tokenBlacklistStore.clear();
   });
 
   describe('signup', () => {
@@ -182,6 +192,39 @@ describe('AuthService', () => {
         } catch (error) {
           expect(error.response.code).toBe('AUTH_INVALID_PASSWORD');
         }
+      });
+    });
+  });
+
+  describe('logout', () => {
+    const token = 'valid-jwt-token';
+
+    describe('when valid token provided', () => {
+      it('should return success message', async () => {
+        // Act
+        const result = await service.logout(token);
+
+        // Assert
+        expect(result.message).toBe('Logged out successfully');
+      });
+
+      it('should add token to blacklist', async () => {
+        // Act
+        await service.logout(token);
+
+        // Assert
+        expect(tokenBlacklistStore.isBlacklisted(token)).toBe(true);
+      });
+
+      it('should decode token to get expiry', async () => {
+        // Arrange
+        mockJwtService.decode.mockClear();
+
+        // Act
+        await service.logout(token);
+
+        // Assert
+        expect(mockJwtService.decode).toHaveBeenCalledWith(token);
       });
     });
   });
