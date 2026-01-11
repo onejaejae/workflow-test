@@ -28,6 +28,77 @@ describe('UserService', () => {
     userStore.clear();
   });
 
+  describe('getUsers', () => {
+    describe('when users exist', () => {
+      beforeEach(() => {
+        for (let i = 1; i <= 15; i++) {
+          userStore.save({
+            id: `user-${i}`,
+            email: `user${i}@example.com`,
+            password: 'hashed-password',
+            createdAt: new Date('2024-01-01T00:00:00.000Z'),
+          });
+        }
+      });
+
+      it('should return paginated users with default values', () => {
+        const result = service.getUsers(1, 10);
+
+        expect(result.items).toHaveLength(10);
+        expect(result.total).toBe(15);
+        expect(result.page).toBe(1);
+        expect(result.limit).toBe(10);
+        expect(result.totalPages).toBe(2);
+      });
+
+      it('should return second page correctly', () => {
+        const result = service.getUsers(2, 10);
+
+        expect(result.items).toHaveLength(5);
+        expect(result.page).toBe(2);
+      });
+
+      it('should not include password in response', () => {
+        const result = service.getUsers(1, 10);
+
+        result.items.forEach((item) => {
+          expect(item).not.toHaveProperty('password');
+        });
+      });
+
+      it('should return user data correctly', () => {
+        const result = service.getUsers(1, 10);
+
+        expect(result.items[0]).toEqual({
+          id: expect.any(String),
+          email: expect.stringContaining('@example.com'),
+          createdAt: expect.any(Date),
+        });
+      });
+    });
+
+    describe('when no users exist', () => {
+      it('should return empty items with zero total', () => {
+        const result = service.getUsers(1, 10);
+
+        expect(result.items).toHaveLength(0);
+        expect(result.total).toBe(0);
+        expect(result.totalPages).toBe(0);
+      });
+    });
+
+    describe('edge cases', () => {
+      it('should return empty items for page beyond total', () => {
+        userStore.save(mockUser);
+        const result = service.getUsers(100, 10);
+
+        expect(result.items).toHaveLength(0);
+        expect(result.total).toBe(1);
+        expect(result.page).toBe(100);
+      });
+    });
+  });
+
   describe('getMe', () => {
     describe('when user exists', () => {
       it('should return user data without password', () => {
