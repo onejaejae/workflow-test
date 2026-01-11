@@ -24,6 +24,21 @@ export class UserStore {
     return user;
   }
 
+  update(id: string, data: Partial<Omit<User, 'id' | 'createdAt'>>): User | undefined {
+    const user = this.users.get(id);
+    if (!user) {
+      return undefined;
+    }
+
+    const updatedUser: User = {
+      ...user,
+      ...data,
+    };
+
+    this.users.set(id, updatedUser);
+    return updatedUser;
+  }
+
   clear(): void {
     this.users.clear();
   }

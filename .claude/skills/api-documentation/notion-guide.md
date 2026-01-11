@@ -39,12 +39,12 @@ API 명세를 Notion Database에 추가하는 상세 가이드입니다.
 | `--docs-id` | 기존 docs 페이지 연결 |
 | `--docs-title` | docs 페이지 제목 (기본: [RE-AI] {name}) |
 
-### 동적 콘텐츠 옵션
+### 필수 콘텐츠 옵션 (문서 품질 보장)
 
 | 옵션 | 설명 |
 |------|------|
-| `--request-body` | Request Body JSON 또는 설명 |
-| `--response` | Response 예시 (반복 가능), 형식: `상태코드:JSON` |
+| `--request-body` | **필수** - Request Body JSON 또는 설명 (DTO에서 추출) |
+| `--response` | **필수** - Response 예시 (반복 가능), 형식: `상태코드:JSON` |
 | `--status` | 구현 상태 (기본: 구현완료) |
 | `--no-suffix` | "API" suffix 비활성화 |
 
@@ -117,16 +117,21 @@ API 명세를 Notion Database에 추가하는 상세 가이드입니다.
 
 ---
 
-## 동적 옵션 필수 안내
+## 필수 옵션 안내
 
-`--request-body` 또는 `--response` 옵션이 없으면 경고 메시지가 출력됩니다:
+⚠️ `--request-body`와 `--response` 옵션은 **필수**입니다.
 
-```
-Warning: --request-body 옵션이 없습니다.
-Warning: --response 옵션이 없습니다. Response Schema가 생성되지 않습니다.
-```
+이 옵션들이 없으면 문서가 불완전하게 생성됩니다:
+- Request Body: placeholder 텍스트만 표시
+- Response Schema: placeholder 텍스트만 표시
 
-개발된 API와 문서의 일관성을 보장하기 위해 **동적 옵션 사용을 권장**합니다.
+### 정보 추출 방법
+
+| 옵션 | 추출 위치 |
+|------|----------|
+| `--request-body` | 구현된 DTO 클래스에서 필드 구조 추출 |
+| `--response` (성공) | Service의 Response 타입에서 추출 |
+| `--response` (에러) | Controller/Service의 예외 처리에서 에러 코드 추출 |
 
 ---
 

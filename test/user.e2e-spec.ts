@@ -157,4 +157,151 @@ describe('User (e2e)', () => {
       });
     });
   });
+
+  describe('PATCH /api/v1/users/me', () => {
+    let accessToken: string;
+
+    beforeEach(async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/auth/signup')
+        .send(testUser);
+
+      const loginResponse = await request(app.getHttpServer())
+        .post('/api/v1/auth/login')
+        .send(testUser);
+
+      accessToken = loginResponse.body.data.accessToken;
+    });
+
+    describe('Happy path', () => {
+      it('should update email only', async () => {
+        const response = await request(app.getHttpServer())
+          .patch('/api/v1/users/me')
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send({ email: 'new@example.com' })
+          .expect(200);
+
+        expect(response.body).toEqual({
+          success: true,
+          data: expect.objectContaining({
+            id: expect.any(String),
+            email: 'new@example.com',
+            createdAt: expect.any(String),
+          }),
+        });
+      });
+
+      it('should update password only', async () => {
+        const response = await request(app.getHttpServer())
+          .patch('/api/v1/users/me')
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send({ password: 'newpassword123' })
+          .expect(200);
+
+        expect(response.body.success).toBe(true);
+        expect(response.body.data.email).toBe(testUser.email);
+
+        // Verify new password works
+        const loginResponse = await request(app.getHttpServer())
+          .post('/api/v1/auth/login')
+          .send({ email: testUser.email, password: 'newpassword123' })
+          .expect(200);
+
+        expect(loginResponse.body.success).toBe(true);
+      });
+
+      it('should update both email and password', async () => {
+        const response = await request(app.getHttpServer())
+          .patch('/api/v1/users/me')
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send({ email: 'new@example.com', password: 'newpassword123' })
+          .expect(200);
+
+        expect(response.body.data.email).toBe('new@example.com');
+
+        // Verify new credentials work
+        const loginResponse = await request(app.getHttpServer())
+          .post('/api/v1/auth/login')
+          .send({ email: 'new@example.com', password: 'newpassword123' })
+          .expect(200);
+
+        expect(loginResponse.body.success).toBe(true);
+      });
+
+      it('should not return password in response', async () => {
+        const response = await request(app.getHttpServer())
+          .patch('/api/v1/users/me')
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send({ email: 'new@example.com' })
+          .expect(200);
+
+        expect(response.body.data).not.toHaveProperty('password');
+      });
+    });
+
+    describe('Error cases', () => {
+      it('should return 401 when no token provided', async () => {
+        const response = await request(app.getHttpServer())
+          .patch('/api/v1/users/me')
+          .send({ email: 'new@example.com' })
+          .expect(401);
+
+        expect(response.body).toEqual({
+          success: false,
+          error: {
+            code: 'AUTH_UNAUTHORIZED',
+            message: expect.any(String),
+          },
+        });
+      });
+
+      it('should return 409 when email already exists', async () => {
+        // Create another user
+        const anotherUser = {
+          email: 'existing@example.com',
+          password: 'password123',
+        };
+        await request(app.getHttpServer())
+          .post('/api/v1/auth/signup')
+          .send(anotherUser);
+
+        // Try to update to existing email
+        const response = await request(app.getHttpServer())
+          .patch('/api/v1/users/me')
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send({ email: 'existing@example.com' })
+          .expect(409);
+
+        expect(response.body).toEqual({
+          success: false,
+          error: {
+            code: 'USER_EMAIL_ALREADY_EXISTS',
+            message: 'Email already exists',
+          },
+        });
+      });
+
+      it('should return 400 when email format is invalid', async () => {
+        const response = await request(app.getHttpServer())
+          .patch('/api/v1/users/me')
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send({ email: 'invalid-email' })
+          .expect(400);
+
+        expect(response.body.success).toBe(false);
+        expect(response.body.error.code).toBe('VALIDATION_ERROR');
+      });
+
+      it('should return 400 when password is too short', async () => {
+        const response = await request(app.getHttpServer())
+          .patch('/api/v1/users/me')
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send({ password: 'short' })
+          .expect(400);
+
+        expect(response.body.success).toBe(false);
+        expect(response.body.error.code).toBe('VALIDATION_ERROR');
+      });
+    });
+  });
 });
