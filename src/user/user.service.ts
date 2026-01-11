@@ -9,9 +9,33 @@ export interface UserResponse {
   createdAt: Date;
 }
 
+export interface UserListResponse {
+  items: UserResponse[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 @Injectable()
 export class UserService {
   constructor(private readonly userStore: UserStore) {}
+
+  getUsers(page: number, limit: number): UserListResponse {
+    const { items, total } = this.userStore.findAll(page, limit);
+
+    return {
+      items: items.map((user) => ({
+        id: user.id,
+        email: user.email,
+        createdAt: user.createdAt,
+      })),
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
 
   getMe(userId: string): UserResponse {
     const user = this.userStore.findById(userId);
