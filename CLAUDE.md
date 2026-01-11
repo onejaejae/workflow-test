@@ -125,8 +125,8 @@ docs/                   # Project documentation
 
 ### 스크립트 사용
 ```bash
-# 설정
-cd .claude/scripts && cp env.sh.example env.sh && vi env.sh
+# 설정 (api-documentation skill 내부)
+cd .claude/skills/api-documentation/scripts && cp env.sh.example env.sh && vi env.sh
 
 # Notion에 추가 (API suffix 자동 추가, 태스크 페이지 생성)
 ./notion/add.sh --name "회원가입" --method POST --endpoint "/api/v1/auth/signup" --tag Auth \

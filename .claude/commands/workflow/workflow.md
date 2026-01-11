@@ -9,6 +9,7 @@ description: 전체 개발 워크플로우를 단계별로 진행합니다. 각 
 전체 개발 파이프라인을 Phase별로 진행합니다. 각 Phase 완료 후 사용자 확인을 받고 다음 단계로 진행합니다.
 
 ## 입력된 Task
+
 $ARGUMENTS
 
 ---
@@ -16,9 +17,11 @@ $ARGUMENTS
 ## Phase 0: 브랜치 준비
 
 ### 수행 작업
+
 작업 시작 전 develop 브랜치를 최신화하고 feature 브랜치를 생성합니다.
 
 ### 명령어
+
 ```bash
 # 1. develop 최신화
 git checkout develop
@@ -29,6 +32,7 @@ git checkout -b feature/[기능명]
 ```
 
 ### 사용자 확인 요청
+
 > **Phase 0 완료**
 >
 > 브랜치가 준비되었습니다: `feature/[기능명]`
@@ -41,6 +45,7 @@ git checkout -b feature/[기능명]
 ## Phase 1: Task 분석
 
 ### 수행 작업
+
 입력된 Task를 분석하여 다음 항목을 도출하세요:
 
 1. **요약**: 한 줄 요약
@@ -50,29 +55,36 @@ git checkout -b feature/[기능명]
 5. **수용 기준 (Acceptance Criteria)**: 완료 조건 목록
 
 ### 출력 형식
+
 ```markdown
 ## Task 분석 결과
 
 ### 요약
+
 [한 줄 요약]
 
 ### 목표
+
 [달성해야 할 결과물]
 
 ### 범위
+
 - 포함: [...]
 - 제외: [...]
 
 ### 기술적 요구사항
+
 - [요구사항 1]
 - [요구사항 2]
 
 ### 수용 기준
+
 - [ ] [조건 1]
 - [ ] [조건 2]
 ```
 
 ### 사용자 확인 요청
+
 분석 결과를 보여준 후 다음을 출력하세요:
 
 > **Phase 1 완료**
@@ -87,6 +99,7 @@ git checkout -b feature/[기능명]
 ## Phase 2: Plan 수립
 
 ### 수행 작업
+
 Task 분석을 바탕으로 구현 계획을 수립하세요:
 
 1. 기존 코드 분석 (관련 파일 파악)
@@ -96,23 +109,28 @@ Task 분석을 바탕으로 구현 계획을 수립하세요:
 api-conventions, code-standards skill을 참조하여 설계하세요.
 
 ### 출력 형식
+
 ```markdown
 ## 구현 계획
 
 ### Step 1: [작업명]
+
 - **파일**: [생성/수정할 파일 경로]
 - **내용**: [구현 내용]
 - **테스트**: [테스트 케이스]
 - **커밋**: `feat: [메시지]`
 
 ### Step 2: [작업명]
+
 ...
 
 ### Step N: 테스트 및 마무리
+
 ...
 ```
 
 ### 사용자 확인 요청
+
 > **Phase 2 완료**
 >
 > 위 계획으로 진행할까요?
@@ -123,16 +141,20 @@ api-conventions, code-standards skill을 참조하여 설계하세요.
 ## Phase 3: 개발
 
 ### 수행 작업
+
 Plan의 각 Step을 순서대로 구현합니다.
 
 각 Step마다:
+
 1. **코드 구현** - api-conventions, code-standards skill 적용
 2. **테스트 작성** - code-standards skill의 테스트 패턴 적용
 3. **테스트 실행** - `npm test` (가능한 경우)
 4. **커밋** - CLAUDE.md의 Commit Conventions 적용
 
 ### Step 진행 보고
+
 각 Step 완료 후:
+
 ```
 ✅ Step [N]/[Total] 완료: [작업명]
 - 구현: ✅
@@ -143,6 +165,7 @@ Plan의 각 Step을 순서대로 구현합니다.
 ```
 
 ### 모든 Step 완료 후
+
 > **Phase 3 완료**
 >
 > 모든 구현이 완료되었습니다.
@@ -153,6 +176,7 @@ Plan의 각 Step을 순서대로 구현합니다.
 ## Phase 4: 리뷰 & PR
 
 ### 수행 작업
+
 code-reviewer agent의 관점으로 전체 변경사항을 리뷰합니다.
 
 1. 전체 변경사항 분석 (`git diff`)
@@ -160,38 +184,45 @@ code-reviewer agent의 관점으로 전체 변경사항을 리뷰합니다.
 3. 리뷰 리포트 출력
 
 ### 리뷰 체크리스트
+
 - [ ] 코드 품질 (가독성, 네이밍, 중복)
 - [ ] 보안 (입력 검증, 인증/인가)
 - [ ] 성능 (N+1 쿼리, 불필요한 연산)
 - [ ] 테스트 (커버리지, 엣지케이스)
 
 ### 출력 형식
+
 ```markdown
 # Code Review Report
 
 ## Summary
-| Category | Count |
-|----------|-------|
-| Critical | [N] |
-| Warning | [N] |
-| Suggestion | [N] |
+
+| Category   | Count |
+| ---------- | ----- |
+| Critical   | [N]   |
+| Warning    | [N]   |
+| Suggestion | [N]   |
 
 ## Issues
+
 (Critical/Warning/Suggestion 이슈 목록)
 
 ## Verdict
+
 **[APPROVED / CHANGES_REQUESTED]**
 ```
 
 ### 사용자 확인 요청
 
 **APPROVED인 경우:**
+
 > **Phase 4 완료 - 리뷰 통과!**
 >
 > 문서화를 진행하려면 "진행"이라고 입력하세요.
 > PR을 바로 생성하려면 "PR"이라고 입력하세요.
 
 **CHANGES_REQUESTED인 경우:**
+
 > **수정 필요**
 >
 > Critical 이슈를 수정한 후 다시 리뷰를 진행하세요.
@@ -201,76 +232,44 @@ code-reviewer agent의 관점으로 전체 변경사항을 리뷰합니다.
 ## Phase 5: 문서화
 
 ### 수행 작업
-api-documentation skill을 참조하여 API 명세를 Notion과 Postman에 추가합니다.
 
-### 스크립트 실행
-```bash
-# Notion에 API 명세 추가 (API suffix 자동, 태스크 페이지 자동 생성)
-.claude/scripts/notion/add.sh \
-  --name "API 이름" \
-  --method POST \
-  --endpoint "/api/v1/..." \
-  --tag "Tag" \
-  --create-docs \
-  --docs-title "[RE-AI] API 이름 구현"
+api-documentation skill을 참조하여 구현된 API를 Notion과 Postman에 문서화합니다.
 
-# CRUD API 공유 시 기존 docs 페이지 연결
-.claude/scripts/notion/add.sh \
-  --name "리소스 수정" \
-  --method PATCH \
-  --endpoint "/api/v1/resources/{id}" \
-  --tag "Tag" \
-  --docs-id "기존-docs-페이지-id"
+### 실행 절차
 
-# API suffix 비활성화 (필요 시)
-.claude/scripts/notion/add.sh \
-  --name "헬스체크" \
-  --method GET \
-  --endpoint "/health" \
-  --tag "System" \
-  --no-suffix
+1. 구현된 API 정보 파악 (이름, 메서드, 엔드포인트, 태그)
+2. api-documentation skill의 가이드에 따라 스크립트 실행
+   - Notion: `notion-guide.md` 참조
+   - Postman: `postman-guide.md` 참조
+3. 실행 결과 확인
 
-# Postman Collection에 추가 (with response examples)
-.claude/scripts/postman/add.sh \
-  --name "API 이름" \
-  --method POST \
-  --endpoint "/api/v1/..." \
-  --body '{"field":"value"}' \
-  --example '성공:201:{"success":true,"data":{...}}' \
-  --example '에러:400:{"success":false,"error":{...}}'
-```
+### 완료 조건
 
-### 실행 및 완료 확인
-1. 구현된 API 정보를 바탕으로 스크립트 파라미터 구성
-2. Notion 스크립트 실행 및 **성공 여부 확인**
-3. Postman 스크립트 실행 및 **성공 여부 확인**
-4. 모두 성공 시에만 Phase 5 완료 처리
+- [ ] Notion 스크립트 실행 성공 (docs 페이지 연결 확인)
+- [ ] Postman 스크립트 실행 성공
 
-### 실행 결과 보고
-각 스크립트 실행 후 결과를 보고하세요:
+### 결과 보고
+
 ```
 📝 문서화 결과
 - Notion: ✅ 성공 / ❌ 실패 (사유)
 - Postman: ✅ 성공 / ❌ 실패 (사유)
 ```
 
-### 완료 조건
-- Notion: ✅ 성공 + **docs 컬럼에 page mention 추가됨** (Docs Page ID 출력 확인)
-- Postman: ✅ 성공
-- **모두 만족해야** Phase 5 완료
-- 하나라도 실패 시 재시도 또는 문제 해결 후 재실행
+### 사용자 확인 요청
 
-### 사용자 확인 요청 (모두 성공 시)
+**성공 시:**
+
 > **Phase 5 완료**
 >
 > API 문서화가 완료되었습니다.
 > PR을 생성하려면 "진행"이라고 입력하세요.
 
-### 실패 시
+**실패 시:**
+
 > **Phase 5 미완료**
 >
-> 문서화가 완료되지 않았습니다.
-> - 환경 설정 확인: `.claude/scripts/env.sh`
+> - 환경 설정 확인: `.claude/skills/api-documentation/scripts/env.sh`
 > - 재시도하려면 "재시도"
 > - 건너뛰려면 "스킵" (권장하지 않음)
 
@@ -279,15 +278,38 @@ api-documentation skill을 참조하여 API 명세를 Notion과 Postman에 추�
 ## Phase 6: PR 생성
 
 ### 수행 작업
+
 리뷰와 문서화가 완료된 후 PR을 생성합니다.
 
 ### 명령어
+
 ```bash
 git push -u origin [브랜치명]
 gh pr create --base develop --title "[제목]" --body "[본문]"
 ```
 
+### PR 본문 템플릿
+
+```markdown
+## Summary
+- [구현한 기능 한 줄 요약]
+
+## Changes
+- [주요 변경사항 1]
+- [주요 변경사항 2]
+
+## Test
+- [x] 단위 테스트 작성 완료
+- [x] 모든 테스트 통과
+
+## Checklist
+- [x] api-conventions 준수
+- [x] code-standards 준수
+- [x] 문서화 완료 (Notion/Postman)
+```
+
 ### 사용자 확인 요청
+
 > **Phase 6 완료 - PR 생성!**
 >
 > PR URL: [생성된 PR URL]
@@ -301,11 +323,13 @@ gh pr create --base develop --title "[제목]" --body "[본문]"
 > **워크플로우 완료!**
 >
 > ### 요약
+>
 > - Task: [요약]
 > - 커밋: [N]개
 > - PR: [URL] (생성된 경우)
 >
 > ### 다음 단계
+>
 > - GitHub Actions 자동 코드 리뷰 대기
 > - 리뷰어 피드백 반영
 > - 머지
@@ -313,6 +337,7 @@ gh pr create --base develop --title "[제목]" --body "[본문]"
 ---
 
 ## 주의사항
+
 - 각 Phase는 사용자 확인 후 다음으로 진행
 - 문제 발생 시 언제든 "중단"하고 수동 진행 가능
 - 참조 Skills: api-conventions, code-standards, api-documentation
