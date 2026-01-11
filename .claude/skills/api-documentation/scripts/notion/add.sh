@@ -72,10 +72,7 @@ show_help() {
     echo "  NOTION_EPIC_ID            연결할 에픽 ID (선택)"
     echo ""
     echo "Examples:"
-    echo "  # 기본 사용 (정적 템플릿)"
-    echo "  $0 --name \"회원가입\" --method POST --endpoint \"/api/v1/auth/signup\" --tag Auth"
-    echo ""
-    echo "  # 동적 Response Schema 포함"
+    echo "  # 동적 Response Schema 포함 (권장)"
     echo "  $0 --name \"내 정보 조회\" --method GET --endpoint \"/api/v1/users/me\" --tag User \\"
     echo "     --create-docs \\"
     echo "     --request-body '없음 (GET 요청)' \\"
@@ -214,14 +211,10 @@ generate_response_blocks() {
     {\"type\": \"code\", \"code\": {\"rich_text\": [{\"type\": \"text\", \"text\": {\"content\": \"${escaped_body}\"}}], \"language\": \"json\"}},"
         done
     else
-        # 기본 정적 템플릿
+        # --response 옵션 없음 경고
+        echo -e "${YELLOW}Warning: --response 옵션이 없습니다. Response Schema가 생성되지 않습니다.${NC}" >&2
         blocks='
-    {"type": "heading_3", "heading_3": {"rich_text": [{"type": "text", "text": {"content": "200 성공"}}]}},
-    {"type": "code", "code": {"rich_text": [{"type": "text", "text": {"content": "{\n  \"success\": true,\n  \"data\": {}\n}"}}], "language": "json"}},
-    {"type": "heading_3", "heading_3": {"rich_text": [{"type": "text", "text": {"content": "400 Bad Request"}}]}},
-    {"type": "code", "code": {"rich_text": [{"type": "text", "text": {"content": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"입력값이 올바르지 않습니다.\"\n  }\n}"}}], "language": "json"}},
-    {"type": "heading_3", "heading_3": {"rich_text": [{"type": "text", "text": {"content": "401 Unauthorized"}}]}},
-    {"type": "code", "code": {"rich_text": [{"type": "text", "text": {"content": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"AUTH_UNAUTHORIZED\",\n    \"message\": \"인증이 필요합니다.\"\n  }\n}"}}], "language": "json"}},'
+    {"type": "paragraph", "paragraph": {"rich_text": [{"type": "text", "text": {"content": "⚠️ --response 옵션을 사용하여 Response Schema를 추가하세요."}}]}},'
     fi
 
     # 마지막 쉼표 제거
@@ -242,7 +235,9 @@ generate_request_body_block() {
             content="$REQUEST_BODY"
         fi
     else
-        content="// Request Body 예시를 작성하세요\n{\n  \n}"
+        # --request-body 옵션 없음 경고
+        echo -e "${YELLOW}Warning: --request-body 옵션이 없습니다.${NC}" >&2
+        content="⚠️ --request-body 옵션을 사용하여 Request Body를 추가하세요."
     fi
 
     echo "$content"

@@ -52,20 +52,7 @@ API 명세를 Notion Database에 추가하는 상세 가이드입니다.
 
 ## 사용 시나리오
 
-### 시나리오 1: 정적 템플릿 (기존 방식)
-
-동적 옵션 없이 기본 템플릿 사용:
-
-```bash
-./scripts/notion/add.sh \
-  --name "로그아웃" \
-  --method POST \
-  --endpoint "/api/v1/auth/logout" \
-  --tag "Auth" \
-  --create-docs
-```
-
-### 시나리오 2: 동적 Response Schema (권장)
+### 시나리오 1: 동적 Response Schema (권장)
 
 실제 API 응답을 포함하여 문서화:
 
@@ -81,7 +68,7 @@ API 명세를 Notion Database에 추가하는 상세 가이드입니다.
   --response '401:{"success":false,"error":{"code":"AUTH_UNAUTHORIZED","message":"Unauthorized"}}'
 ```
 
-### 시나리오 3: POST API with Request Body
+### 시나리오 2: POST API with Request Body
 
 ```bash
 ./scripts/notion/add.sh \
@@ -96,7 +83,7 @@ API 명세를 Notion Database에 추가하는 상세 가이드입니다.
   --response '409:{"success":false,"error":{"code":"AUTH_EMAIL_ALREADY_EXISTS","message":"Email already exists"}}'
 ```
 
-### 시나리오 4: CRUD API (기존 docs 페이지 공유)
+### 시나리오 3: CRUD API (기존 docs 페이지 공유)
 
 ```bash
 # 첫 번째 API (docs 페이지 생성)
@@ -117,7 +104,7 @@ API 명세를 Notion Database에 추가하는 상세 가이드입니다.
   --docs-id "위에서-생성된-docs-page-id"
 ```
 
-### 시나리오 5: API suffix 불필요 (헬스체크 등)
+### 시나리오 4: API suffix 불필요 (헬스체크 등)
 
 ```bash
 ./scripts/notion/add.sh \
@@ -127,6 +114,19 @@ API 명세를 Notion Database에 추가하는 상세 가이드입니다.
   --tag "System" \
   --no-suffix
 ```
+
+---
+
+## 동적 옵션 필수 안내
+
+`--request-body` 또는 `--response` 옵션이 없으면 경고 메시지가 출력됩니다:
+
+```
+Warning: --request-body 옵션이 없습니다.
+Warning: --response 옵션이 없습니다. Response Schema가 생성되지 않습니다.
+```
+
+개발된 API와 문서의 일관성을 보장하기 위해 **동적 옵션 사용을 권장**합니다.
 
 ---
 
