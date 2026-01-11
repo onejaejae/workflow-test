@@ -19,6 +19,15 @@ export class UserStore {
     return Array.from(this.users.values()).find((user) => user.email === email);
   }
 
+  findAll(page: number, limit: number): { items: User[]; total: number } {
+    const allUsers = Array.from(this.users.values());
+    const total = allUsers.length;
+    const startIndex = (page - 1) * limit;
+    const items = allUsers.slice(startIndex, startIndex + limit);
+
+    return { items, total };
+  }
+
   save(user: User): User {
     this.users.set(user.id, user);
     return user;
