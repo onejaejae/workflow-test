@@ -188,7 +188,7 @@ code-reviewer agent의 관점으로 전체 변경사항을 리뷰합니다.
 - [ ] 코드 품질 (가독성, 네이밍, 중복)
 - [ ] 보안 (입력 검증, 인증/인가)
 - [ ] 성능 (N+1 쿼리, 불필요한 연산)
-- [ ] 테스트 (커버리지, 엣지케이스)u
+- [ ] 테스트 (커버리지, 엣지케이스)
 
 ### 출력 형식
 
@@ -233,56 +233,22 @@ code-reviewer agent의 관점으로 전체 변경사항을 리뷰합니다.
 
 ### 수행 작업
 
-api-documentation skill을 참조하여 API 명세를 Notion과 Postman에 추가합니다.
+api-documentation skill을 참조하여 구현된 API를 Notion과 Postman에 문서화합니다.
 
-### 스크립트 실행
+### 실행 절차
 
-```bash
-# Notion에 API 명세 추가 (API suffix 자동, 태스크 페이지 자동 생성)
-.claude/skills/api-documentation/scripts/notion/add.sh \
-  --name "API 이름" \
-  --method POST \
-  --endpoint "/api/v1/..." \
-  --tag "Tag" \
-  --create-docs \
-  --docs-title "[RE-AI] API 이름 구현"
+1. 구현된 API 정보 파악 (이름, 메서드, 엔드포인트, 태그)
+2. api-documentation skill의 가이드에 따라 스크립트 실행
+   - Notion: `notion-guide.md` 참조
+   - Postman: `postman-guide.md` 참조
+3. 실행 결과 확인
 
-# CRUD API 공유 시 기존 docs 페이지 연결
-.claude/skills/api-documentation/scripts/notion/add.sh \
-  --name "리소스 수정" \
-  --method PATCH \
-  --endpoint "/api/v1/resources/{id}" \
-  --tag "Tag" \
-  --docs-id "기존-docs-페이지-id"
+### 완료 조건
 
-# API suffix 비활성화 (필요 시)
-.claude/skills/api-documentation/scripts/notion/add.sh \
-  --name "헬스체크" \
-  --method GET \
-  --endpoint "/health" \
-  --tag "System" \
-  --no-suffix
+- [ ] Notion 스크립트 실행 성공 (docs 페이지 연결 확인)
+- [ ] Postman 스크립트 실행 성공
 
-# Postman Collection에 추가 (with response examples)
-.claude/skills/api-documentation/scripts/postman/add.sh \
-  --name "API 이름" \
-  --method POST \
-  --endpoint "/api/v1/..." \
-  --body '{"field":"value"}' \
-  --example '성공:201:{"success":true,"data":{...}}' \
-  --example '에러:400:{"success":false,"error":{...}}'
-```
-
-### 실행 및 완료 확인
-
-1. 구현된 API 정보를 바탕으로 스크립트 파라미터 구성
-2. Notion 스크립트 실행 및 **성공 여부 확인**
-3. Postman 스크립트 실행 및 **성공 여부 확인**
-4. 모두 성공 시에만 Phase 5 완료 처리
-
-### 실행 결과 보고
-
-각 스크립트 실행 후 결과를 보고하세요:
+### 결과 보고
 
 ```
 📝 문서화 결과
@@ -290,25 +256,18 @@ api-documentation skill을 참조하여 API 명세를 Notion과 Postman에 추�
 - Postman: ✅ 성공 / ❌ 실패 (사유)
 ```
 
-### 완료 조건
+### 사용자 확인 요청
 
-- Notion: ✅ 성공 + **docs 컬럼에 page mention 추가됨** (Docs Page ID 출력 확인)
-- Postman: ✅ 성공
-- **모두 만족해야** Phase 5 완료
-- 하나라도 실패 시 재시도 또는 문제 해결 후 재실행
-
-### 사용자 확인 요청 (모두 성공 시)
+**성공 시:**
 
 > **Phase 5 완료**
 >
 > API 문서화가 완료되었습니다.
 > PR을 생성하려면 "진행"이라고 입력하세요.
 
-### 실패 시
+**실패 시:**
 
 > **Phase 5 미완료**
->
-> 문서화가 완료되지 않았습니다.
 >
 > - 환경 설정 확인: `.claude/skills/api-documentation/scripts/env.sh`
 > - 재시도하려면 "재시도"
@@ -327,6 +286,26 @@ api-documentation skill을 참조하여 API 명세를 Notion과 Postman에 추�
 ```bash
 git push -u origin [브랜치명]
 gh pr create --base develop --title "[제목]" --body "[본문]"
+```
+
+### PR 본문 템플릿
+
+```markdown
+## Summary
+- [구현한 기능 한 줄 요약]
+
+## Changes
+- [주요 변경사항 1]
+- [주요 변경사항 2]
+
+## Test
+- [x] 단위 테스트 작성 완료
+- [x] 모든 테스트 통과
+
+## Checklist
+- [x] api-conventions 준수
+- [x] code-standards 준수
+- [x] 문서화 완료 (Notion/Postman)
 ```
 
 ### 사용자 확인 요청

@@ -1,6 +1,8 @@
 ---
 name: code-standards
-description: 코드 구현 및 테스트 작성 시 표준을 제공합니다. 파일 구조, 네이밍 컨벤션, 테스트 패턴(Happy/Edge/Error), 커밋 컨벤션을 참조합니다. 키워드: 코드 구현, 테스트 작성, Service, 커밋
+description: >
+  코드 구현 및 테스트 작성 표준. 파일 구조, 네이밍 컨벤션, 테스트 패턴, 커밋 컨벤션을 정의합니다.
+  Use when implementing features, writing tests, or making commits.
 ---
 
 # Code Standards

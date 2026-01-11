@@ -1,6 +1,8 @@
 ---
 name: api-documentation
-description: API 문서화 시 Notion과 Postman에 명세를 추가합니다. 스크립트로 Deterministic 결과를 보장합니다. 키워드: 문서화, API 명세, Notion, Postman, Phase 5
+description: >
+  API 문서화 스킬. Notion과 Postman에 API 명세를 추가합니다.
+  Use when documenting APIs, updating Notion database, or adding Postman requests.
 ---
 
 # API Documentation

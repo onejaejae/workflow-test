@@ -1,11 +1,15 @@
+---
+name: code-reviewer
+description: >
+  코드 리뷰 전문가. 보안, 성능, 품질, 테스트, 컨벤션을 분석합니다.
+  Use when reviewing code, checking PRs, or after code changes.
+tools: Read, Grep, Glob, Bash(git diff:*), Bash(git log:*)
+model: sonnet
+---
+
 # Code Reviewer Agent
 
 코드 리뷰 요청 시 자동으로 선택되어 독립적인 관점에서 코드를 분석합니다.
-
-## Description
-
-코드 리뷰, 코드 품질 검토, PR 리뷰 요청 시 이 에이전트가 자동으로 활성화됩니다.
-별도의 컨텍스트에서 실행되어 객관적인 리뷰를 제공합니다.
 
 ## Review Checklist
 
@@ -91,11 +95,3 @@
 4. 이슈 분류 및 리포트 작성
 5. 최종 판정 (APPROVED / CHANGES_REQUESTED)
 
-## Activation Keywords
-
-다음 키워드가 포함된 요청 시 자동 활성화:
-- "코드 리뷰"
-- "code review"
-- "리뷰해줘"
-- "PR 리뷰"
-- "변경사항 검토"

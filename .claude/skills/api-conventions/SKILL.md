@@ -1,6 +1,8 @@
 ---
 name: api-conventions
-description: API 설계 시 RESTful 컨벤션을 제공합니다. URL 설계, HTTP 메서드, 상태 코드, Response 형식, 에러 코드를 참조합니다. 키워드: API 구현, 엔드포인트, Controller, REST, HTTP
+description: >
+  RESTful API 설계 컨벤션. URL 설계, HTTP 메서드, 상태 코드, Response 형식, 에러 코드를 정의합니다.
+  Use when designing API endpoints, implementing controllers, or reviewing API implementations.
 ---
 
 # API Conventions
