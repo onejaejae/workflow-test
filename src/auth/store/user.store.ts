@@ -11,6 +11,10 @@ export interface User {
 export class UserStore {
   private users: Map<string, User> = new Map();
 
+  findById(id: string): User | undefined {
+    return this.users.get(id);
+  }
+
   findByEmail(email: string): User | undefined {
     return Array.from(this.users.values()).find((user) => user.email === email);
   }
