@@ -13,7 +13,7 @@ export class UserController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard)
   getUsers(@Query() query: GetUsersQueryDto): UserListResponse {
-    return this.userService.getUsers(query.page!, query.limit!);
+    return this.userService.getUsers(query.page ?? 1, query.limit ?? 10);
   }
 
   @Get('me')

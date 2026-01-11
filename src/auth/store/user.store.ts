@@ -20,7 +20,9 @@ export class UserStore {
   }
 
   findAll(page: number, limit: number): { items: User[]; total: number } {
-    const allUsers = Array.from(this.users.values());
+    const allUsers = Array.from(this.users.values()).sort(
+      (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+    );
     const total = allUsers.length;
     const startIndex = (page - 1) * limit;
     const items = allUsers.slice(startIndex, startIndex + limit);
