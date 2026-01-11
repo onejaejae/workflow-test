@@ -48,6 +48,123 @@ describe('User (e2e)', () => {
     tokenBlacklistStore.clear();
   });
 
+  describe('GET /api/v1/users', () => {
+    let accessToken: string;
+
+    beforeEach(async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/auth/signup')
+        .send(testUser);
+
+      const loginResponse = await request(app.getHttpServer())
+        .post('/api/v1/auth/login')
+        .send(testUser);
+
+      accessToken = loginResponse.body.data.accessToken;
+    });
+
+    describe('Happy path', () => {
+      it('should return 200 with paginated users', async () => {
+        const response = await request(app.getHttpServer())
+          .get('/api/v1/users')
+          .set('Authorization', `Bearer ${accessToken}`)
+          .expect(200);
+
+        expect(response.body).toEqual({
+          success: true,
+          data: {
+            items: expect.any(Array),
+            total: expect.any(Number),
+            page: 1,
+            limit: 10,
+            totalPages: expect.any(Number),
+          },
+        });
+      });
+
+      it('should return users with correct structure', async () => {
+        const response = await request(app.getHttpServer())
+          .get('/api/v1/users')
+          .set('Authorization', `Bearer ${accessToken}`)
+          .expect(200);
+
+        expect(response.body.data.items.length).toBeGreaterThan(0);
+        expect(response.body.data.items[0]).toEqual({
+          id: expect.any(String),
+          email: expect.any(String),
+          createdAt: expect.any(String),
+        });
+      });
+
+      it('should not include password in response', async () => {
+        const response = await request(app.getHttpServer())
+          .get('/api/v1/users')
+          .set('Authorization', `Bearer ${accessToken}`)
+          .expect(200);
+
+        response.body.data.items.forEach((item: any) => {
+          expect(item).not.toHaveProperty('password');
+        });
+      });
+
+      it('should respect page and limit query params', async () => {
+        const response = await request(app.getHttpServer())
+          .get('/api/v1/users?page=1&limit=5')
+          .set('Authorization', `Bearer ${accessToken}`)
+          .expect(200);
+
+        expect(response.body.data.page).toBe(1);
+        expect(response.body.data.limit).toBe(5);
+      });
+    });
+
+    describe('Error cases', () => {
+      it('should return 401 when no token provided', async () => {
+        const response = await request(app.getHttpServer())
+          .get('/api/v1/users')
+          .expect(401);
+
+        expect(response.body).toEqual({
+          success: false,
+          error: {
+            code: 'AUTH_UNAUTHORIZED',
+            message: expect.any(String),
+          },
+        });
+      });
+
+      it('should return 401 when invalid token provided', async () => {
+        const response = await request(app.getHttpServer())
+          .get('/api/v1/users')
+          .set('Authorization', 'Bearer invalid-token')
+          .expect(401);
+
+        expect(response.body.success).toBe(false);
+        expect(response.body.error.code).toBe('AUTH_UNAUTHORIZED');
+      });
+
+      it('should return 400 when page is invalid', async () => {
+        const response = await request(app.getHttpServer())
+          .get('/api/v1/users?page=0')
+          .set('Authorization', `Bearer ${accessToken}`)
+          .expect(400);
+
+        expect(response.body.success).toBe(false);
+        expect(response.body.error.code).toBe('VALIDATION_ERROR');
+      });
+
+      it('should return 400 when limit exceeds max', async () => {
+        const response = await request(app.getHttpServer())
+          .get('/api/v1/users?limit=101')
+          .set('Authorization', `Bearer ${accessToken}`)
+          .expect(400);
+
+        expect(response.body.success).toBe(false);
+        expect(response.body.error.code).toBe('VALIDATION_ERROR');
+      });
+    });
+  });
+
   describe('GET /api/v1/users/me', () => {
     describe('Happy path', () => {
       it('should return 200 with user data when authenticated', async () => {
