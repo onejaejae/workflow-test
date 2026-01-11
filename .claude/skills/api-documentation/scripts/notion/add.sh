@@ -6,6 +6,7 @@
 # Features:
 #   - 자동으로 "API" suffix 추가 (--no-suffix로 비활성화)
 #   - docs 페이지 생성 및 연결 (--create-docs 또는 --docs-id)
+#   - 동적 Request Body 및 Response Schema 지원
 #
 
 set -e
@@ -26,6 +27,21 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+# HTTP 상태 텍스트 함수
+get_status_text() {
+    case $1 in
+        200) echo "200 성공" ;;
+        201) echo "201 Created" ;;
+        400) echo "400 Bad Request" ;;
+        401) echo "401 Unauthorized" ;;
+        403) echo "403 Forbidden" ;;
+        404) echo "404 Not Found" ;;
+        409) echo "409 Conflict" ;;
+        500) echo "500 Internal Server Error" ;;
+        *) echo "$1" ;;
+    esac
+}
+
 # 도움말
 show_help() {
     echo "Usage: $0 [OPTIONS]"
@@ -33,17 +49,22 @@ show_help() {
     echo "Notion 데이터베이스에 API 명세를 추가합니다."
     echo ""
     echo "Options:"
-    echo "  --name        API 이름/설명 (필수, 자동으로 'API' suffix 추가)"
-    echo "  --method      HTTP 메서드: GET, POST, PUT, PATCH, DELETE (필수)"
-    echo "  --endpoint    API 엔드포인트 경로 (필수)"
-    echo "  --tag         태그/카테고리 (필수)"
-    echo "  --status      구현 여부 (기본값: 구현완료)"
-    echo "  --no-suffix   'API' suffix 자동 추가 비활성화"
+    echo "  --name          API 이름/설명 (필수, 자동으로 'API' suffix 추가)"
+    echo "  --method        HTTP 메서드: GET, POST, PUT, PATCH, DELETE (필수)"
+    echo "  --endpoint      API 엔드포인트 경로 (필수)"
+    echo "  --tag           태그/카테고리 (필수)"
+    echo "  --status        구현 여부 (기본값: 구현완료)"
+    echo "  --no-suffix     'API' suffix 자동 추가 비활성화"
     echo ""
     echo "Docs Options:"
     echo "  --create-docs   태스크 Database에 docs 페이지 생성 및 연결"
     echo "  --docs-id       기존 docs 페이지 ID로 연결 (page mention)"
     echo "  --docs-title    docs 페이지 제목 (기본값: [RE-AI] {name})"
+    echo ""
+    echo "Dynamic Content Options:"
+    echo "  --request-body  Request Body JSON 또는 설명 (선택)"
+    echo "  --response      Response 예시 (반복 가능)"
+    echo "                  형식: \"상태코드:JSON\""
     echo "  --help          도움말 표시"
     echo ""
     echo "Environment Variables:"
@@ -51,16 +72,15 @@ show_help() {
     echo "  NOTION_EPIC_ID            연결할 에픽 ID (선택)"
     echo ""
     echo "Examples:"
-    echo "  # 기본 사용 (API suffix 자동 추가)"
+    echo "  # 기본 사용 (정적 템플릿)"
     echo "  $0 --name \"회원가입\" --method POST --endpoint \"/api/v1/auth/signup\" --tag Auth"
     echo ""
-    echo "  # 태스크 페이지 자동 생성 및 연결"
-    echo "  $0 --name \"회원가입\" --method POST --endpoint \"/api/v1/auth/signup\" --tag Auth \\"
-    echo "     --create-docs --docs-title \"[RE-AI] 회원가입 API 구현\""
-    echo ""
-    echo "  # 기존 docs 페이지 연결 (CRUD API 공유 시)"
-    echo "  $0 --name \"연구지원 수정\" --method PATCH --endpoint \"/api/researches/{id}\" --tag Research \\"
-    echo "     --docs-id \"2dfd87e5-17f4-8021-9e23-cc6b0ed72c1c\""
+    echo "  # 동적 Response Schema 포함"
+    echo "  $0 --name \"내 정보 조회\" --method GET --endpoint \"/api/v1/users/me\" --tag User \\"
+    echo "     --create-docs \\"
+    echo "     --request-body '없음 (GET 요청)' \\"
+    echo "     --response '200:{\"success\":true,\"data\":{\"id\":\"uuid\",\"email\":\"user@example.com\"}}' \\"
+    echo "     --response '401:{\"success\":false,\"error\":{\"code\":\"AUTH_UNAUTHORIZED\",\"message\":\"Unauthorized\"}}'"
 }
 
 # 인자 파싱
@@ -73,6 +93,8 @@ NO_SUFFIX=false
 CREATE_DOCS=false
 DOCS_ID=""
 DOCS_TITLE=""
+REQUEST_BODY=""
+declare -a RESPONSES=()
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -110,6 +132,14 @@ while [[ $# -gt 0 ]]; do
             ;;
         --docs-title)
             DOCS_TITLE="$2"
+            shift 2
+            ;;
+        --request-body)
+            REQUEST_BODY="$2"
+            shift 2
+            ;;
+        --response)
+            RESPONSES+=("$2")
             shift 2
             ;;
         --help)
@@ -154,6 +184,69 @@ if [[ -z "$NOTION_API_KEY" ]]; then
     echo "env.sh 파일을 생성하거나 환경변수를 설정하세요."
     exit 1
 fi
+
+# JSON 문자열 이스케이프 함수 (macOS/Linux 호환)
+escape_json_string() {
+    local input="$1"
+    # JSON pretty print 시도, 실패하면 원본 사용
+    local formatted=$(echo "$input" | jq '.' 2>/dev/null || echo "$input")
+    # 줄바꿈과 특수문자 이스케이프 (macOS 호환)
+    echo "$formatted" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | awk '{printf "%s\\n", $0}' | sed 's/\\n$//'
+}
+
+# Response 블록 생성 함수
+generate_response_blocks() {
+    local blocks=""
+
+    if [[ ${#RESPONSES[@]} -gt 0 ]]; then
+        # 동적 Response 블록 생성
+        for response in "${RESPONSES[@]}"; do
+            local status_code=$(echo "$response" | cut -d':' -f1)
+            local response_body=$(echo "$response" | cut -d':' -f2-)
+            local status_text=$(get_status_text "$status_code")
+
+            # JSON pretty print
+            local formatted_body=$(echo "$response_body" | jq '.' 2>/dev/null || echo "$response_body")
+            local escaped_body=$(escape_json_string "$formatted_body")
+
+            blocks="${blocks}
+    {\"type\": \"heading_3\", \"heading_3\": {\"rich_text\": [{\"type\": \"text\", \"text\": {\"content\": \"${status_text}\"}}]}},
+    {\"type\": \"code\", \"code\": {\"rich_text\": [{\"type\": \"text\", \"text\": {\"content\": \"${escaped_body}\"}}], \"language\": \"json\"}},"
+        done
+    else
+        # 기본 정적 템플릿
+        blocks='
+    {"type": "heading_3", "heading_3": {"rich_text": [{"type": "text", "text": {"content": "200 성공"}}]}},
+    {"type": "code", "code": {"rich_text": [{"type": "text", "text": {"content": "{\n  \"success\": true,\n  \"data\": {}\n}"}}], "language": "json"}},
+    {"type": "heading_3", "heading_3": {"rich_text": [{"type": "text", "text": {"content": "400 Bad Request"}}]}},
+    {"type": "code", "code": {"rich_text": [{"type": "text", "text": {"content": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"입력값이 올바르지 않습니다.\"\n  }\n}"}}], "language": "json"}},
+    {"type": "heading_3", "heading_3": {"rich_text": [{"type": "text", "text": {"content": "401 Unauthorized"}}]}},
+    {"type": "code", "code": {"rich_text": [{"type": "text", "text": {"content": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"AUTH_UNAUTHORIZED\",\n    \"message\": \"인증이 필요합니다.\"\n  }\n}"}}], "language": "json"}},'
+    fi
+
+    # 마지막 쉼표 제거
+    echo "$blocks" | sed '$ s/,$//'
+}
+
+# Request Body 블록 생성 함수 (macOS/Linux 호환)
+generate_request_body_block() {
+    local content=""
+
+    if [[ -n "$REQUEST_BODY" ]]; then
+        # JSON인지 확인
+        if echo "$REQUEST_BODY" | jq '.' > /dev/null 2>&1; then
+            # JSON이면 pretty print (macOS 호환)
+            content=$(echo "$REQUEST_BODY" | jq '.' | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | awk '{printf "%s\\n", $0}' | sed 's/\\n$//')
+        else
+            # JSON이 아니면 그대로 사용 (예: "없음 (GET 요청)")
+            content="$REQUEST_BODY"
+        fi
+    else
+        content="// Request Body 예시를 작성하세요\n{\n  \n}"
+    fi
+
+    echo "$content"
+}
 
 # docs 페이지 생성 함수 (태스크 Database에 row 추가)
 create_docs_page() {
@@ -238,7 +331,11 @@ TASKEOF
         return 1
     fi
 
-    # 태스크 페이지에 API Spec 템플릿 블록 추가
+    # 동적 블록 생성
+    local request_body_content=$(generate_request_body_block)
+    local response_blocks=$(generate_response_blocks)
+
+    # 태스크 페이지에 API Spec 블록 추가
     local blocks_payload=$(cat <<BLOCKSEOF
 {
   "children": [
@@ -254,16 +351,11 @@ TASKEOF
     {"type": "heading_3", "heading_3": {"rich_text": [{"type": "text", "text": {"content": "Query Parameters"}}]}},
     {"type": "bulleted_list_item", "bulleted_list_item": {"rich_text": [{"type": "text", "text": {"content": "없음 (필요시 추가)"}}]}},
     {"type": "heading_3", "heading_3": {"rich_text": [{"type": "text", "text": {"content": "Request Body"}}]}},
-    {"type": "code", "code": {"rich_text": [{"type": "text", "text": {"content": "// Request Body 예시를 작성하세요\n{\n  \n}"}}], "language": "json"}},
+    {"type": "code", "code": {"rich_text": [{"type": "text", "text": {"content": "${request_body_content}"}}], "language": "json"}},
     {"type": "heading_3", "heading_3": {"rich_text": [{"type": "text", "text": {"content": "요청 예시"}}]}},
     {"type": "code", "code": {"rich_text": [{"type": "text", "text": {"content": "curl -X '${method}' 'http://localhost:8000${endpoint}' \\\\\n  -H 'Authorization: Bearer {jwt_token}' \\\\\n  -H 'Content-Type: application/json' \\\\\n  -d '{}'"}}], "language": "bash"}},
     {"type": "heading_3", "heading_3": {"rich_text": [{"type": "text", "text": {"content": "Response Schema"}}]}},
-    {"type": "heading_3", "heading_3": {"rich_text": [{"type": "text", "text": {"content": "200 성공"}}]}},
-    {"type": "code", "code": {"rich_text": [{"type": "text", "text": {"content": "{\n  \"success\": true,\n  \"data\": {}\n}"}}], "language": "json"}},
-    {"type": "heading_3", "heading_3": {"rich_text": [{"type": "text", "text": {"content": "400 Bad Request"}}]}},
-    {"type": "code", "code": {"rich_text": [{"type": "text", "text": {"content": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"입력값이 올바르지 않습니다.\"\n  }\n}"}}], "language": "json"}},
-    {"type": "heading_3", "heading_3": {"rich_text": [{"type": "text", "text": {"content": "401 Unauthorized"}}]}},
-    {"type": "code", "code": {"rich_text": [{"type": "text", "text": {"content": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"AUTH_UNAUTHORIZED\",\n    \"message\": \"인증이 필요합니다.\"\n  }\n}"}}], "language": "json"}}
+    ${response_blocks}
   ]
 }
 BLOCKSEOF
@@ -392,6 +484,9 @@ if echo "$RESPONSE" | grep -q '"object":"page"'; then
     echo "  Page ID: ${PAGE_ID}"
     if [[ -n "$DOCS_PAGE_ID" ]]; then
         echo "  Docs Page ID: ${DOCS_PAGE_ID}"
+    fi
+    if [[ ${#RESPONSES[@]} -gt 0 ]]; then
+        echo "  Responses: ${#RESPONSES[@]}개 (동적)"
     fi
 else
     echo -e "${RED}❌ 오류 발생:${NC}"
