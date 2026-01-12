@@ -1,0 +1,37 @@
+import { Injectable } from '@nestjs/common';
+import { v4 as uuidv4 } from 'uuid';
+import { CreatePostDto } from './dto/create-post.dto';
+import { PostStore, Post } from './store/post.store';
+
+export interface CreatePostResponse {
+  id: string;
+  title: string;
+  content: string;
+  authorId: string;
+  createdAt: Date;
+}
+
+@Injectable()
+export class PostService {
+  constructor(private readonly postStore: PostStore) {}
+
+  create(dto: CreatePostDto, authorId: string): CreatePostResponse {
+    const post: Post = {
+      id: uuidv4(),
+      title: dto.title,
+      content: dto.content,
+      authorId,
+      createdAt: new Date(),
+    };
+
+    this.postStore.save(post);
+
+    return {
+      id: post.id,
+      title: post.title,
+      content: post.content,
+      authorId: post.authorId,
+      createdAt: post.createdAt,
+    };
+  }
+}
