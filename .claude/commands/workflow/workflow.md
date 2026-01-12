@@ -55,25 +55,25 @@ $ARGUMENTS
 - [ ] [조건 2]
 ```
 
-### Docs 페이지 초안 생성
-
-api-documentation skill (draft 모드)로 docs 페이지 초안을 생성합니다.
-
-**중요:** 스크립트 실행 결과에서 다음 ID를 저장하세요:
-- `task_id`: Task ID (예: DPT-10309) - **Phase 2 브랜치 생성 및 Phase 6 PR 생성 시 사용**
-- `docs_page_id`: docs 페이지 ID - Phase 5에서 사용
-- `api_row_id`: API Database row ID - Phase 5에서 사용
-
 ### 사용자 확인 요청
 
-분석 결과와 docs 페이지 생성 결과를 보여준 후 다음을 출력하세요:
+분석 결과를 보여준 후 다음을 출력하세요:
 
-> **Phase 0 완료**
+> **Phase 0 분석 완료**
 >
 > 위 분석이 맞습니까? 수정이 필요하면 말씀해주세요.
 > 계속 진행하려면 "진행"이라고 입력하세요.
 
-사용자가 "진행"이라고 하면 Phase 1로 넘어가세요.
+### 승인 후: Docs 페이지 생성
+
+사용자가 "진행"이라고 하면:
+
+1. api-documentation skill (draft 모드)로 docs 페이지 초안을 생성합니다.
+2. 스크립트 실행 결과에서 다음 ID를 저장하세요:
+   - `task_id`: Task ID (예: DPT-10309) - **Phase 2 브랜치 생성 및 Phase 6 PR 생성 시 사용**
+   - `docs_page_id`: docs 페이지 ID - Phase 5에서 사용
+   - `api_row_id`: API Database row ID - Phase 5에서 사용
+3. 생성 결과를 출력한 후 Phase 1로 넘어가세요.
 
 ---
 
