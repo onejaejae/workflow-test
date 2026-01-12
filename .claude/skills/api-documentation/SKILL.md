@@ -52,29 +52,6 @@ Task 분석 완료 후 docs 페이지 초안 생성:
 
 ---
 
-## 빠른 시작
-
-### Notion
-
-```bash
-./scripts/notion/add.sh \
-  --name "API명" \
-  --method POST \
-  --endpoint "/api/v1/..." \
-  --tag "Tag"
-```
-
-### Postman
-
-```bash
-./scripts/postman/add.sh \
-  --name "API명" \
-  --method POST \
-  --endpoint "/api/v1/..."
-```
-
----
-
 ## 상세 가이드
 
 - Notion 옵션 및 시나리오: [notion-guide.md](notion-guide.md)
