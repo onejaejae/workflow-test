@@ -8,5 +8,6 @@ export class CreatePostDto {
 
   @IsString()
   @IsNotEmpty({ message: 'Content is required' })
+  @MaxLength(10000, { message: 'Content must be at most 10000 characters' })
   content: string;
 }
