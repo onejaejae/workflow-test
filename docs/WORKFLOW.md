@@ -133,14 +133,17 @@ Anthropic에서 만든 **AI 기반 CLI 개발 도구**입니다.
 ```
 /workflow 로그아웃 API 구현
         │
-        ├─ Phase 0: 브랜치 자동 생성
-        │     git checkout -b feature/auth-logout
-        │
-        ├─ Phase 1: Task 분석
+        ├─ Phase 0: Task 분석 + Docs 페이지 초안 생성
         │     요약, 목표, 수용 기준 도출
+        │     api-documentation skill (draft 모드)로 Notion docs 페이지 생성
+        │     → task_id, docs_page_id, api_row_id 저장
         │
-        ├─ Phase 2: Plan 수립
+        ├─ Phase 1: Plan 수립
         │     Step 분해 (각 Step = 1 커밋)
+        │
+        ├─ Phase 2: 브랜치 준비
+        │     git checkout -b [task_id].[type]_[기능명]
+        │     예: DPT-10296.feat_로그아웃API
         │
         ├─ Phase 3: 개발
         │     코드 구현 + 테스트 + 커밋
@@ -148,16 +151,18 @@ Anthropic에서 만든 **AI 기반 CLI 개발 도구**입니다.
         ├─ Phase 4: 코드 리뷰 ← code-reviewer Subagent 활용
         │     독립적 관점에서 품질/보안/성능 검토
         │
-        ├─ Phase 5: 문서화 ← Scripts 활용
-        │     Notion API 명세 + Postman Request 자동 추가
+        ├─ Phase 5: 문서화 ← Scripts 활용 (finalize 모드)
+        │     Notion docs 페이지 업데이트 + API row 상태 변경
+        │     Postman Request 자동 추가
         │
         └─ Phase 6: PR 생성
               gh pr create --base develop
+              티켓 링크 (task_id) 포함
 ```
 
 ### 3.3 핵심 포인트: Skills & Subagent 활용
 
-#### Phase 2-3: Skills 활용 (api-conventions, code-standards)
+#### Phase 1, 3: Skills 활용 (api-conventions, code-standards)
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -178,7 +183,7 @@ Anthropic에서 만든 **AI 기반 CLI 개발 도구**입니다.
 │     → code-standards SKILL.md 자동 로드                         │
 │  3. 필요 시 Level 3 참조 파일 추가 로드                          │
 │                                                                  │
-│  Phase 2 (Plan 수립) 적용:                                      │
+│  Phase 1 (Plan 수립) 적용:                                      │
 │  ─────────────────────────                                      │
 │  - URL 설계: /api/v1/{resource} 복수형 명사                     │
 │  - HTTP 메서드: GET/POST/PATCH/DELETE 적절히 선택               │
@@ -218,7 +223,7 @@ Anthropic에서 만든 **AI 기반 CLI 개발 도구**입니다.
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-#### Phase 5: api-documentation Skill + Scripts (Deterministic)
+#### Phase 0, 5: api-documentation Skill + Scripts (Deterministic)
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -233,12 +238,14 @@ Anthropic에서 만든 **AI 기반 CLI 개발 도구**입니다.
 │                                                                  │
 │  작동 방식:                                                     │
 │  ───────────                                                    │
-│  1. "문서화", "Phase 5" 키워드 감지                              │
-│     → api-documentation SKILL.md 자동 로드                      │
-│  2. 옵션 상세 필요 시                                           │
-│     → notion-guide.md 또는 postman-guide.md 참조                │
-│  3. 스크립트 실행                                               │
-│     → Deterministic 결과 보장 (항상 같은 형식)                   │
+│  Phase 0 (draft 모드):                                          │
+│  - Task 분석 후 docs 페이지 초안 생성                            │
+│  - task_id, docs_page_id, api_row_id 획득 및 저장                │
+│                                                                  │
+│  Phase 5 (finalize 모드):                                       │
+│  - 구현 완료 후 docs 페이지 업데이트                             │
+│  - API row 상태: "구현예정" → "구현완료" 변경                    │
+│  - Postman에 Request 추가                                       │
 │                                                                  │
 │  왜 Scripts인가?                                                │
 │  ─────────────                                                  │
@@ -248,15 +255,20 @@ Anthropic에서 만든 **AI 기반 CLI 개발 도구**입니다.
 │                                                                  │
 │  예시:                                                          │
 │  ──────                                                         │
-│  # Notion                                                       │
-│  ./scripts/notion/add.sh --name "로그아웃" --method POST \      │
-│                          --endpoint "/api/v1/auth/logout" \     │
-│                          --tag Auth --create-docs               │
+│  # Phase 0: Draft 모드                                          │
+│  ./scripts/notion/add.sh --mode draft \                         │
+│    --name "로그아웃" --method POST \                            │
+│    --endpoint "/api/v1/auth/logout" --tag Auth \                │
+│    --create-docs --background "..." --requirements "..."        │
 │                                                                  │
-│  # Postman                                                      │
+│  # Phase 5: Finalize 모드                                       │
+│  ./scripts/notion/add.sh --mode finalize \                      │
+│    --docs-id "..." --api-row-id "..." \                         │
+│    --request-body '{...}' --response '200:{...}'                │
+│                                                                  │
 │  ./scripts/postman/add.sh --name "로그아웃 API" --method POST \ │
-│                           --endpoint "/api/v1/auth/logout" \    │
-│                           --example "성공:200:{...}"            │
+│    --endpoint "/api/v1/auth/logout" \                           │
+│    --example "성공:200:{...}"                                   │
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
 ```

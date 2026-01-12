@@ -15,10 +15,10 @@ API 문서화 스킬입니다. Notion과 Postman에 API 명세를 추가합니�
 
 | 모드 | 호출 시점 | 역할 |
 |-----|----------|-----|
-| `draft` | Phase 1 (Task 분석) | Task Definition 기반 docs 페이지 초안 생성 |
+| `draft` | Phase 0 (Task 분석) | Task Definition 기반 docs 페이지 초안 생성 |
 | `finalize` | Phase 5 (문서화) | 실제 구현 기반으로 API Spec 업데이트 |
 
-### Draft 모드 (Phase 1)
+### Draft 모드 (Phase 0)
 
 Task 분석 완료 후 docs 페이지 초안 생성:
 - 배경, 주요 요구사항, Notes
