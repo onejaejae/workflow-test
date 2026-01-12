@@ -14,35 +14,7 @@ $ARGUMENTS
 
 ---
 
-## Phase 0: 브랜치 준비
-
-### 수행 작업
-
-작업 시작 전 develop 브랜치를 최신화하고 feature 브랜치를 생성합니다.
-
-### 명령어
-
-```bash
-# 1. develop 최신화
-git checkout develop
-git pull origin develop
-
-# 2. feature 브랜치 생성
-git checkout -b feature/[기능명]
-```
-
-### 사용자 확인 요청
-
-> **Phase 0 완료**
->
-> 브랜치가 준비되었습니다: `feature/[기능명]`
-> 계속 진행하려면 "진행"이라고 입력하세요.
-
-사용자가 "진행"이라고 하면 Phase 1로 넘어가세요.
-
----
-
-## Phase 1: Task 분석
+## Phase 0: Task 분석
 
 ### 수행 작업
 
@@ -88,7 +60,7 @@ git checkout -b feature/[기능명]
 api-documentation skill (draft 모드)로 docs 페이지 초안을 생성합니다.
 
 **중요:** 스크립트 실행 결과에서 다음 ID를 저장하세요:
-- `task_id`: Task ID (예: DPT-10309) - **Phase 6 PR 생성 시 사용**
+- `task_id`: Task ID (예: DPT-10309) - **Phase 2 브랜치 생성 및 Phase 6 PR 생성 시 사용**
 - `docs_page_id`: docs 페이지 ID - Phase 5에서 사용
 - `api_row_id`: API Database row ID - Phase 5에서 사용
 
@@ -96,16 +68,16 @@ api-documentation skill (draft 모드)로 docs 페이지 초안을 생성합니�
 
 분석 결과와 docs 페이지 생성 결과를 보여준 후 다음을 출력하세요:
 
-> **Phase 1 완료**
+> **Phase 0 완료**
 >
 > 위 분석이 맞습니까? 수정이 필요하면 말씀해주세요.
 > 계속 진행하려면 "진행"이라고 입력하세요.
 
-사용자가 "진행"이라고 하면 Phase 2로 넘어가세요.
+사용자가 "진행"이라고 하면 Phase 1로 넘어가세요.
 
 ---
 
-## Phase 2: Plan 수립
+## Phase 1: Plan 수립
 
 ### 수행 작업
 
@@ -140,10 +112,57 @@ api-conventions, code-standards skill을 참조하여 설계하세요.
 
 ### 사용자 확인 요청
 
-> **Phase 2 완료**
+> **Phase 1 완료**
 >
 > 위 계획으로 진행할까요?
 > 계속 진행하려면 "진행"이라고 입력하세요.
+
+사용자가 "진행"이라고 하면 Phase 2로 넘어가세요.
+
+---
+
+## Phase 2: 브랜치 준비
+
+### 수행 작업
+
+develop 브랜치를 최신화하고 Phase 0에서 획득한 `task_id`를 사용하여 feature 브랜치를 생성합니다.
+
+### 브랜치명 컨벤션
+
+```
+[task_id].[type]_[기능명]
+
+타입: feat, fix, docs, refactor, test, chore 등 (커밋 타입과 동일)
+
+예시:
+- DPT-10296.feat_공지사항-수정API-첨부파일기능추가
+- DPT-10297.fix_로그인-토큰-만료-버그수정
+- DPT-10298.docs_API-문서-업데이트
+```
+
+### 명령어
+
+```bash
+# 1. develop 최신화
+git checkout develop
+git pull origin develop
+
+# 2. feature 브랜치 생성 (task_id 사용)
+git checkout -b [task_id].[type]_[기능명]
+```
+
+### 사용자 확인 요청
+
+브랜치 생성 전 사용자에게 브랜치 타입을 확인하세요.
+
+브랜치 생성 후 다음을 출력하세요:
+
+> **Phase 2 완료**
+>
+> 브랜치가 준비되었습니다: `[task_id].[type]_[기능명]`
+> 계속 진행하려면 "진행"이라고 입력하세요.
+
+사용자가 "진행"이라고 하면 Phase 3으로 넘어가세요.
 
 ---
 
@@ -247,7 +266,7 @@ api-documentation skill (finalize 모드)로 구현된 API를 Notion과 Postman�
 ### 실행 절차
 
 1. 구현된 코드 분석 (DTO, Service, Controller)
-2. Phase 1에서 저장한 `docs_page_id`와 `api_row_id`로 finalize 모드 실행
+2. Phase 0에서 저장한 `docs_page_id`와 `api_row_id`로 finalize 모드 실행
 3. Request Body, Response Schema 업데이트 + API row 상태 "구현완료"로 변경
 4. Postman에 추가: `postman-guide.md` 참조
 
@@ -298,7 +317,7 @@ gh pr create --base develop --title "[제목]" --body "[본문]"
 
 ### PR 본문 템플릿
 
-Phase 1에서 저장한 `task_id`를 티켓 링크에 포함합니다.
+Phase 0에서 저장한 `task_id`를 티켓 링크에 포함합니다.
 
 ```markdown
 # 🔗 티켓 링크
