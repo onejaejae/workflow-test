@@ -7,29 +7,47 @@ description: >
 
 # API Documentation
 
-API 구현 후 Notion과 Postman에 문서화하는 스킬입니다.
+API 문서화 스킬입니다. Notion과 Postman에 API 명세를 추가합니다.
 
 ---
 
-## 빠른 시작
+## 모드
 
-### Notion
+| 모드 | 호출 시점 | 역할 |
+|-----|----------|-----|
+| `draft` | Phase 1 (Task 분석) | Task Definition 기반 docs 페이지 초안 생성 |
+| `finalize` | Phase 5 (문서화) | 실제 구현 기반으로 API Spec 업데이트 |
+
+### Draft 모드 (Phase 1)
+
+Task 분석 완료 후 docs 페이지 초안 생성:
+- 배경, 주요 요구사항, Notes
+- 예상 API Spec (placeholder)
 
 ```bash
-./scripts/notion/add.sh \
-  --name "API명" \
-  --method POST \
-  --endpoint "/api/v1/..." \
-  --tag "Tag"
+./scripts/notion/add.sh --mode draft \
+  --name "API명" --method POST --endpoint "/api/v1/..." --tag Tag \
+  --create-docs \
+  --background "배경 설명" \
+  --requirements "기능 요구사항"
 ```
 
-### Postman
+### Finalize 모드 (Phase 5)
+
+구현 완료 후 **기존 docs 페이지를 업데이트**하고 **API row 상태를 변경**합니다:
+- 실제 Request Body (DTO 기반)
+- 실제 Response Schema (Service 기반)
+- API row 상태: "구현예정" → "구현완료"
+
+**주의:** Finalize 모드는 새 API row를 생성하지 않습니다.
 
 ```bash
-./scripts/postman/add.sh \
-  --name "API명" \
-  --method POST \
-  --endpoint "/api/v1/..."
+./scripts/notion/add.sh --mode finalize \
+  --docs-id "기존-docs-page-id" \
+  --api-row-id "기존-api-row-id" \
+  --request-body '{"title":"string","content":"string"}' \
+  --response '201:{"success":true,"data":{...}}' \
+  --response '400:{"success":false,"error":{...}}'
 ```
 
 ---
