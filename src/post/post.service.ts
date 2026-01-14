@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { CreatePostDto } from './dto/create-post.dto';
 import { PostStore, Post } from './store/post.store';
@@ -33,5 +37,25 @@ export class PostService {
       authorId: post.authorId,
       createdAt: post.createdAt,
     };
+  }
+
+  delete(id: string, userId: string): void {
+    const post = this.postStore.findById(id);
+
+    if (!post) {
+      throw new NotFoundException({
+        code: 'POST_NOT_FOUND',
+        message: 'Post not found',
+      });
+    }
+
+    if (post.authorId !== userId) {
+      throw new ForbiddenException({
+        code: 'POST_DELETE_FORBIDDEN',
+        message: 'You can only delete your own posts',
+      });
+    }
+
+    this.postStore.delete(id);
   }
 }
