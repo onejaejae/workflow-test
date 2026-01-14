@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PostService } from '../post.service';
 import { PostStore } from '../store/post.store';
 
@@ -72,6 +73,60 @@ describe('PostService', () => {
       const after = new Date();
       expect(result.createdAt.getTime()).toBeGreaterThanOrEqual(before.getTime());
       expect(result.createdAt.getTime()).toBeLessThanOrEqual(after.getTime());
+    });
+  });
+
+  describe('delete', () => {
+    const createPostDto = {
+      title: 'Test Post Title',
+      content: 'Test post content',
+    };
+
+    it('should delete a post successfully', () => {
+      // Arrange
+      const createdPost = service.create(createPostDto, mockAuthorId);
+
+      // Act
+      service.delete(createdPost.id, mockAuthorId);
+
+      // Assert
+      const deletedPost = postStore.findById(createdPost.id);
+      expect(deletedPost).toBeUndefined();
+    });
+
+    it('should throw NotFoundException when post does not exist', () => {
+      // Act & Assert
+      expect(() => service.delete('non-existent-id', mockAuthorId)).toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('should throw ForbiddenException when user is not the author', () => {
+      // Arrange
+      const createdPost = service.create(createPostDto, mockAuthorId);
+      const anotherUserId = 'another-user-id';
+
+      // Act & Assert
+      expect(() => service.delete(createdPost.id, anotherUserId)).toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it('should not delete the post when user is not the author', () => {
+      // Arrange
+      const createdPost = service.create(createPostDto, mockAuthorId);
+      const anotherUserId = 'another-user-id';
+
+      // Act
+      try {
+        service.delete(createdPost.id, anotherUserId);
+      } catch {
+        // Expected to throw
+      }
+
+      // Assert - post should still exist
+      const existingPost = postStore.findById(createdPost.id);
+      expect(existingPost).toBeDefined();
     });
   });
 });
