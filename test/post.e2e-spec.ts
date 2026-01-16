@@ -272,4 +272,184 @@ describe('Post (e2e)', () => {
       });
     });
   });
+
+  describe('PATCH /api/v1/posts/:id', () => {
+    let postId: string;
+
+    beforeEach(async () => {
+      // Create a post to update
+      const response = await request(app.getHttpServer())
+        .post('/api/v1/posts')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ title: 'Original Title', content: 'Original content' });
+
+      postId = response.body.data.id;
+    });
+
+    describe('Happy path', () => {
+      it('should return 200 with updated post data when updating title only', async () => {
+        const response = await request(app.getHttpServer())
+          .patch(`/api/v1/posts/${postId}`)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send({ title: 'Updated Title' })
+          .expect(200);
+
+        expect(response.body).toEqual({
+          success: true,
+          data: expect.objectContaining({
+            id: postId,
+            title: 'Updated Title',
+            content: 'Original content',
+            authorId: expect.any(String),
+            createdAt: expect.any(String),
+          }),
+        });
+      });
+
+      it('should return 200 with updated post data when updating content only', async () => {
+        const response = await request(app.getHttpServer())
+          .patch(`/api/v1/posts/${postId}`)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send({ content: 'Updated content' })
+          .expect(200);
+
+        expect(response.body).toEqual({
+          success: true,
+          data: expect.objectContaining({
+            id: postId,
+            title: 'Original Title',
+            content: 'Updated content',
+          }),
+        });
+      });
+
+      it('should return 200 with updated post data when updating both fields', async () => {
+        const response = await request(app.getHttpServer())
+          .patch(`/api/v1/posts/${postId}`)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send({ title: 'Updated Title', content: 'Updated content' })
+          .expect(200);
+
+        expect(response.body).toEqual({
+          success: true,
+          data: expect.objectContaining({
+            id: postId,
+            title: 'Updated Title',
+            content: 'Updated content',
+          }),
+        });
+      });
+
+      it('should persist the updated data to the store', async () => {
+        await request(app.getHttpServer())
+          .patch(`/api/v1/posts/${postId}`)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send({ title: 'Updated Title', content: 'Updated content' })
+          .expect(200);
+
+        const savedPost = postStore.findById(postId);
+        expect(savedPost!.title).toBe('Updated Title');
+        expect(savedPost!.content).toBe('Updated content');
+      });
+    });
+
+    describe('Authentication errors', () => {
+      it('should return 401 when no token provided', async () => {
+        const response = await request(app.getHttpServer())
+          .patch(`/api/v1/posts/${postId}`)
+          .send({ title: 'Updated Title' })
+          .expect(401);
+
+        expect(response.body.success).toBe(false);
+      });
+
+      it('should return 401 when invalid token provided', async () => {
+        const response = await request(app.getHttpServer())
+          .patch(`/api/v1/posts/${postId}`)
+          .set('Authorization', 'Bearer invalid-token')
+          .send({ title: 'Updated Title' })
+          .expect(401);
+
+        expect(response.body.success).toBe(false);
+      });
+    });
+
+    describe('Not found errors', () => {
+      it('should return 404 when post does not exist', async () => {
+        const response = await request(app.getHttpServer())
+          .patch('/api/v1/posts/non-existent-id')
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send({ title: 'Updated Title' })
+          .expect(404);
+
+        expect(response.body.success).toBe(false);
+        expect(response.body.error.code).toBe('POST_NOT_FOUND');
+      });
+    });
+
+    describe('Authorization errors', () => {
+      it('should return 403 when trying to update another user post', async () => {
+        // Create another user
+        const anotherUser = {
+          email: 'another@example.com',
+          password: 'password123',
+        };
+
+        await request(app.getHttpServer())
+          .post('/api/v1/auth/signup')
+          .send(anotherUser);
+
+        const loginResponse = await request(app.getHttpServer())
+          .post('/api/v1/auth/login')
+          .send(anotherUser);
+
+        const anotherUserToken = loginResponse.body.data.accessToken;
+
+        // Try to update the post created by the first user
+        const response = await request(app.getHttpServer())
+          .patch(`/api/v1/posts/${postId}`)
+          .set('Authorization', `Bearer ${anotherUserToken}`)
+          .send({ title: 'Updated Title' })
+          .expect(403);
+
+        expect(response.body.success).toBe(false);
+        expect(response.body.error.code).toBe('POST_UPDATE_FORBIDDEN');
+      });
+    });
+
+    describe('Validation errors', () => {
+      it('should return 400 when title is empty string', async () => {
+        const response = await request(app.getHttpServer())
+          .patch(`/api/v1/posts/${postId}`)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send({ title: '' })
+          .expect(400);
+
+        expect(response.body.success).toBe(false);
+        expect(response.body.error.code).toBe('VALIDATION_ERROR');
+      });
+
+      it('should return 400 when title exceeds max length', async () => {
+        const response = await request(app.getHttpServer())
+          .patch(`/api/v1/posts/${postId}`)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send({ title: 'a'.repeat(101) })
+          .expect(400);
+
+        expect(response.body.success).toBe(false);
+        expect(response.body.error.code).toBe('VALIDATION_ERROR');
+      });
+
+      it('should return 400 when content exceeds max length', async () => {
+        const response = await request(app.getHttpServer())
+          .patch(`/api/v1/posts/${postId}`)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send({ content: 'a'.repeat(10001) })
+          .expect(400);
+
+        expect(response.body.success).toBe(false);
+        expect(response.body.error.code).toBe('VALIDATION_ERROR');
+      });
+    });
+  });
 });
