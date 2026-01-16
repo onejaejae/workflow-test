@@ -1,7 +1,9 @@
 import {
   Controller,
   Post,
+  Delete,
   Body,
+  Param,
   HttpCode,
   HttpStatus,
   UseGuards,
@@ -23,5 +25,15 @@ export class PostController {
     @CurrentUser('userId') userId: string,
   ): CreatePostResponse {
     return this.postService.create(dto, userId);
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  delete(
+    @Param('id') id: string,
+    @CurrentUser('userId') userId: string,
+  ): void {
+    this.postService.delete(id, userId);
   }
 }

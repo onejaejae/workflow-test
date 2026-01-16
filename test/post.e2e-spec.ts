@@ -177,4 +177,99 @@ describe('Post (e2e)', () => {
       });
     });
   });
+
+  describe('DELETE /api/v1/posts/:id', () => {
+    let postId: string;
+
+    beforeEach(async () => {
+      // Create a post to delete
+      const response = await request(app.getHttpServer())
+        .post('/api/v1/posts')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ title: 'Test Post', content: 'Test content' });
+
+      postId = response.body.data.id;
+    });
+
+    describe('Happy path', () => {
+      it('should return 200 when deleting own post', async () => {
+        const response = await request(app.getHttpServer())
+          .delete(`/api/v1/posts/${postId}`)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .expect(200);
+
+        expect(response.body.success).toBe(true);
+      });
+
+      it('should remove the post from the store', async () => {
+        await request(app.getHttpServer())
+          .delete(`/api/v1/posts/${postId}`)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .expect(200);
+
+        const deletedPost = postStore.findById(postId);
+        expect(deletedPost).toBeUndefined();
+      });
+    });
+
+    describe('Authentication errors', () => {
+      it('should return 401 when no token provided', async () => {
+        const response = await request(app.getHttpServer())
+          .delete(`/api/v1/posts/${postId}`)
+          .expect(401);
+
+        expect(response.body.success).toBe(false);
+      });
+
+      it('should return 401 when invalid token provided', async () => {
+        const response = await request(app.getHttpServer())
+          .delete(`/api/v1/posts/${postId}`)
+          .set('Authorization', 'Bearer invalid-token')
+          .expect(401);
+
+        expect(response.body.success).toBe(false);
+      });
+    });
+
+    describe('Not found errors', () => {
+      it('should return 404 when post does not exist', async () => {
+        const response = await request(app.getHttpServer())
+          .delete('/api/v1/posts/non-existent-id')
+          .set('Authorization', `Bearer ${accessToken}`)
+          .expect(404);
+
+        expect(response.body.success).toBe(false);
+        expect(response.body.error.code).toBe('POST_NOT_FOUND');
+      });
+    });
+
+    describe('Authorization errors', () => {
+      it('should return 403 when trying to delete another user post', async () => {
+        // Create another user
+        const anotherUser = {
+          email: 'another@example.com',
+          password: 'password123',
+        };
+
+        await request(app.getHttpServer())
+          .post('/api/v1/auth/signup')
+          .send(anotherUser);
+
+        const loginResponse = await request(app.getHttpServer())
+          .post('/api/v1/auth/login')
+          .send(anotherUser);
+
+        const anotherUserToken = loginResponse.body.data.accessToken;
+
+        // Try to delete the post created by the first user
+        const response = await request(app.getHttpServer())
+          .delete(`/api/v1/posts/${postId}`)
+          .set('Authorization', `Bearer ${anotherUserToken}`)
+          .expect(403);
+
+        expect(response.body.success).toBe(false);
+        expect(response.body.error.code).toBe('POST_DELETE_FORBIDDEN');
+      });
+    });
+  });
 });

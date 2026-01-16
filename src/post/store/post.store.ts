@@ -25,6 +25,10 @@ export class PostStore {
     return post;
   }
 
+  delete(id: string): boolean {
+    return this.posts.delete(id);
+  }
+
   clear(): void {
     this.posts.clear();
   }
