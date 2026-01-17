@@ -1,6 +1,7 @@
 import {
   Controller,
   Post,
+  Patch,
   Delete,
   Body,
   Param,
@@ -8,8 +9,9 @@ import {
   HttpStatus,
   UseGuards,
 } from '@nestjs/common';
-import { PostService, CreatePostResponse } from './post.service';
+import { PostService, CreatePostResponse, UpdatePostResponse } from './post.service';
 import { CreatePostDto } from './dto/create-post.dto';
+import { UpdatePostDto } from './dto/update-post.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
@@ -25,6 +27,17 @@ export class PostController {
     @CurrentUser('userId') userId: string,
   ): CreatePostResponse {
     return this.postService.create(dto, userId);
+  }
+
+  @Patch(':id')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdatePostDto,
+    @CurrentUser('userId') userId: string,
+  ): UpdatePostResponse {
+    return this.postService.update(id, dto, userId);
   }
 
   @Delete(':id')

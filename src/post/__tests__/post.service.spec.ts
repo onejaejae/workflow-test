@@ -129,4 +129,88 @@ describe('PostService', () => {
       expect(existingPost).toBeDefined();
     });
   });
+
+  describe('update', () => {
+    const createPostDto = {
+      title: 'Original Title',
+      content: 'Original content',
+    };
+
+    it('should update title only', () => {
+      // Arrange
+      const createdPost = service.create(createPostDto, mockAuthorId);
+      const updateDto = { title: 'Updated Title' };
+
+      // Act
+      const result = service.update(createdPost.id, updateDto, mockAuthorId);
+
+      // Assert
+      expect(result.title).toBe('Updated Title');
+      expect(result.content).toBe('Original content');
+      expect(result.id).toBe(createdPost.id);
+      expect(result.authorId).toBe(mockAuthorId);
+    });
+
+    it('should update content only', () => {
+      // Arrange
+      const createdPost = service.create(createPostDto, mockAuthorId);
+      const updateDto = { content: 'Updated content' };
+
+      // Act
+      const result = service.update(createdPost.id, updateDto, mockAuthorId);
+
+      // Assert
+      expect(result.title).toBe('Original Title');
+      expect(result.content).toBe('Updated content');
+    });
+
+    it('should update both title and content', () => {
+      // Arrange
+      const createdPost = service.create(createPostDto, mockAuthorId);
+      const updateDto = { title: 'Updated Title', content: 'Updated content' };
+
+      // Act
+      const result = service.update(createdPost.id, updateDto, mockAuthorId);
+
+      // Assert
+      expect(result.title).toBe('Updated Title');
+      expect(result.content).toBe('Updated content');
+    });
+
+    it('should throw NotFoundException when post does not exist', () => {
+      // Arrange
+      const updateDto = { title: 'Updated Title' };
+
+      // Act & Assert
+      expect(() =>
+        service.update('non-existent-id', updateDto, mockAuthorId),
+      ).toThrow(NotFoundException);
+    });
+
+    it('should throw ForbiddenException when user is not the author', () => {
+      // Arrange
+      const createdPost = service.create(createPostDto, mockAuthorId);
+      const updateDto = { title: 'Updated Title' };
+      const anotherUserId = 'another-user-id';
+
+      // Act & Assert
+      expect(() =>
+        service.update(createdPost.id, updateDto, anotherUserId),
+      ).toThrow(ForbiddenException);
+    });
+
+    it('should persist the updated data to the store', () => {
+      // Arrange
+      const createdPost = service.create(createPostDto, mockAuthorId);
+      const updateDto = { title: 'Updated Title', content: 'Updated content' };
+
+      // Act
+      service.update(createdPost.id, updateDto, mockAuthorId);
+
+      // Assert
+      const savedPost = postStore.findById(createdPost.id);
+      expect(savedPost!.title).toBe('Updated Title');
+      expect(savedPost!.content).toBe('Updated content');
+    });
+  });
 });
