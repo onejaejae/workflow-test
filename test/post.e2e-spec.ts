@@ -272,4 +272,176 @@ describe('Post (e2e)', () => {
       });
     });
   });
+
+  describe('PATCH /api/v1/posts/:id', () => {
+    let postId: string;
+    const originalPost = {
+      title: 'Original Title',
+      content: 'Original content',
+    };
+
+    beforeEach(async () => {
+      // Create a post to update
+      const response = await request(app.getHttpServer())
+        .post('/api/v1/posts')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send(originalPost);
+
+      postId = response.body.data.id;
+    });
+
+    describe('Happy path', () => {
+      it('should return 200 with updated post data', async () => {
+        const updatePayload = {
+          title: 'Updated Title',
+          content: 'Updated content',
+        };
+
+        const response = await request(app.getHttpServer())
+          .patch(`/api/v1/posts/${postId}`)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send(updatePayload)
+          .expect(200);
+
+        expect(response.body).toEqual({
+          success: true,
+          data: expect.objectContaining({
+            id: postId,
+            title: updatePayload.title,
+            content: updatePayload.content,
+            authorId: expect.any(String),
+            createdAt: expect.any(String),
+          }),
+        });
+      });
+
+      it('should update only title when content is not provided', async () => {
+        const updatePayload = { title: 'Updated Title Only' };
+
+        const response = await request(app.getHttpServer())
+          .patch(`/api/v1/posts/${postId}`)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send(updatePayload)
+          .expect(200);
+
+        expect(response.body.data.title).toBe(updatePayload.title);
+        expect(response.body.data.content).toBe(originalPost.content);
+      });
+
+      it('should update only content when title is not provided', async () => {
+        const updatePayload = { content: 'Updated Content Only' };
+
+        const response = await request(app.getHttpServer())
+          .patch(`/api/v1/posts/${postId}`)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send(updatePayload)
+          .expect(200);
+
+        expect(response.body.data.title).toBe(originalPost.title);
+        expect(response.body.data.content).toBe(updatePayload.content);
+      });
+
+      it('should save the updated post to the store', async () => {
+        const updatePayload = { title: 'Store Updated Title' };
+
+        await request(app.getHttpServer())
+          .patch(`/api/v1/posts/${postId}`)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send(updatePayload)
+          .expect(200);
+
+        const savedPost = postStore.findById(postId);
+        expect(savedPost).toBeDefined();
+        expect(savedPost!.title).toBe(updatePayload.title);
+      });
+    });
+
+    describe('Authentication errors', () => {
+      it('should return 401 when no token provided', async () => {
+        const response = await request(app.getHttpServer())
+          .patch(`/api/v1/posts/${postId}`)
+          .send({ title: 'Updated' })
+          .expect(401);
+
+        expect(response.body.success).toBe(false);
+      });
+
+      it('should return 401 when invalid token provided', async () => {
+        const response = await request(app.getHttpServer())
+          .patch(`/api/v1/posts/${postId}`)
+          .set('Authorization', 'Bearer invalid-token')
+          .send({ title: 'Updated' })
+          .expect(401);
+
+        expect(response.body.success).toBe(false);
+      });
+    });
+
+    describe('Not found errors', () => {
+      it('should return 404 when post does not exist', async () => {
+        const response = await request(app.getHttpServer())
+          .patch('/api/v1/posts/non-existent-id')
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send({ title: 'Updated' })
+          .expect(404);
+
+        expect(response.body.success).toBe(false);
+        expect(response.body.error.code).toBe('POST_NOT_FOUND');
+      });
+    });
+
+    describe('Authorization errors', () => {
+      it('should return 403 when trying to update another user post', async () => {
+        // Create another user
+        const anotherUser = {
+          email: 'another-update@example.com',
+          password: 'password123',
+        };
+
+        await request(app.getHttpServer())
+          .post('/api/v1/auth/signup')
+          .send(anotherUser);
+
+        const loginResponse = await request(app.getHttpServer())
+          .post('/api/v1/auth/login')
+          .send(anotherUser);
+
+        const anotherUserToken = loginResponse.body.data.accessToken;
+
+        // Try to update the post created by the first user
+        const response = await request(app.getHttpServer())
+          .patch(`/api/v1/posts/${postId}`)
+          .set('Authorization', `Bearer ${anotherUserToken}`)
+          .send({ title: 'Hijacked Title' })
+          .expect(403);
+
+        expect(response.body.success).toBe(false);
+        expect(response.body.error.code).toBe('POST_UPDATE_FORBIDDEN');
+      });
+    });
+
+    describe('Validation errors', () => {
+      it('should return 400 when title exceeds max length', async () => {
+        const response = await request(app.getHttpServer())
+          .patch(`/api/v1/posts/${postId}`)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send({ title: 'a'.repeat(101) })
+          .expect(400);
+
+        expect(response.body.success).toBe(false);
+        expect(response.body.error.code).toBe('VALIDATION_ERROR');
+      });
+
+      it('should return 400 when content exceeds max length', async () => {
+        const response = await request(app.getHttpServer())
+          .patch(`/api/v1/posts/${postId}`)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send({ content: 'a'.repeat(10001) })
+          .expect(400);
+
+        expect(response.body.success).toBe(false);
+        expect(response.body.error.code).toBe('VALIDATION_ERROR');
+      });
+    });
+  });
 });
